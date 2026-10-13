@@ -1,120 +1,120 @@
 {
-  "trained_at": "2026-08-14T10:56:58.666Z",
+  "trained_at": "2026-10-13T05:45:40.617Z",
   "algorithm": "Ridge Regression with L2 Regularization",
   "status": "TRAINED_LIVE",
-  "r2_score": 0.8495,
-  "mae": 3.55,
-  "sample_count": 53,
-  "bias": 53.583,
+  "r2_score": 0.3925,
+  "mae": 17.31,
+  "sample_count": 1517,
+  "bias": 70.532,
   "feature_weights": {
-    "sentiment_score": -1.175,
-    "char_count_norm": 7.825,
-    "has_question_hook": 6.735,
-    "has_cta": 2.876,
-    "hashtag_density": 2.471,
-    "is_video": 10.689,
-    "video_duration_optimal": 0.613,
-    "is_vertical_916": 2.171,
-    "has_subtitles": -2.556,
-    "hook_quality_norm": 0.808,
-    "is_carousel": 4.038,
-    "has_text_overlay": 3.031,
-    "is_peak_hour": 11.731,
-    "is_weekday": 6.446,
-    "plat_instagram": -0.016,
-    "plat_twitter": 4.137,
-    "plat_linkedin": 4.154,
-    "plat_facebook": -8.275
+    "sentiment_score": 0.108,
+    "char_count_norm": -11.298,
+    "has_question_hook": -0.636,
+    "has_cta": 4.151,
+    "hashtag_density": 6.423,
+    "is_video": 10.724,
+    "video_duration_optimal": -11.803,
+    "is_vertical_916": 18.326,
+    "has_subtitles": -0.776,
+    "hook_quality_norm": 3.915,
+    "is_carousel": 9.766,
+    "has_text_overlay": 9.766,
+    "is_peak_hour": 0.037,
+    "is_weekday": 10.995,
+    "plat_instagram": -4.719,
+    "plat_twitter": -0.819,
+    "plat_linkedin": -37.919,
+    "plat_facebook": -12.385
   },
   "top_feature_importances": [
     {
-      "feature": "is_peak_hour",
-      "weight": 11.731,
-      "relativeImpactPercent": 14.7
-    },
-    {
-      "feature": "is_video",
-      "weight": 10.689,
-      "relativeImpactPercent": 13.4
-    },
-    {
-      "feature": "plat_facebook",
-      "weight": -8.275,
-      "relativeImpactPercent": 10.4
-    },
-    {
-      "feature": "char_count_norm",
-      "weight": 7.825,
-      "relativeImpactPercent": 9.8
-    },
-    {
-      "feature": "has_question_hook",
-      "weight": 6.735,
-      "relativeImpactPercent": 8.4
-    },
-    {
-      "feature": "is_weekday",
-      "weight": 6.446,
-      "relativeImpactPercent": 8.1
-    },
-    {
-      "feature": "plat_twitter",
-      "weight": 4.137,
-      "relativeImpactPercent": 5.2
-    },
-    {
       "feature": "plat_linkedin",
-      "weight": 4.154,
-      "relativeImpactPercent": 5.2
-    },
-    {
-      "feature": "is_carousel",
-      "weight": 4.038,
-      "relativeImpactPercent": 5.1
-    },
-    {
-      "feature": "has_text_overlay",
-      "weight": 3.031,
-      "relativeImpactPercent": 3.8
-    },
-    {
-      "feature": "has_cta",
-      "weight": 2.876,
-      "relativeImpactPercent": 3.6
-    },
-    {
-      "feature": "has_subtitles",
-      "weight": -2.556,
-      "relativeImpactPercent": 3.2
-    },
-    {
-      "feature": "hashtag_density",
-      "weight": 2.471,
-      "relativeImpactPercent": 3.1
+      "weight": -37.919,
+      "relativeImpactPercent": 24.5
     },
     {
       "feature": "is_vertical_916",
-      "weight": 2.171,
-      "relativeImpactPercent": 2.7
+      "weight": 18.326,
+      "relativeImpactPercent": 11.9
     },
     {
-      "feature": "sentiment_score",
-      "weight": -1.175,
-      "relativeImpactPercent": 1.5
-    },
-    {
-      "feature": "hook_quality_norm",
-      "weight": 0.808,
-      "relativeImpactPercent": 1
+      "feature": "plat_facebook",
+      "weight": -12.385,
+      "relativeImpactPercent": 8
     },
     {
       "feature": "video_duration_optimal",
-      "weight": 0.613,
-      "relativeImpactPercent": 0.8
+      "weight": -11.803,
+      "relativeImpactPercent": 7.6
+    },
+    {
+      "feature": "char_count_norm",
+      "weight": -11.298,
+      "relativeImpactPercent": 7.3
+    },
+    {
+      "feature": "is_weekday",
+      "weight": 10.995,
+      "relativeImpactPercent": 7.1
+    },
+    {
+      "feature": "is_video",
+      "weight": 10.724,
+      "relativeImpactPercent": 6.9
+    },
+    {
+      "feature": "is_carousel",
+      "weight": 9.766,
+      "relativeImpactPercent": 6.3
+    },
+    {
+      "feature": "has_text_overlay",
+      "weight": 9.766,
+      "relativeImpactPercent": 6.3
+    },
+    {
+      "feature": "hashtag_density",
+      "weight": 6.423,
+      "relativeImpactPercent": 4.2
     },
     {
       "feature": "plat_instagram",
-      "weight": -0.016,
+      "weight": -4.719,
+      "relativeImpactPercent": 3.1
+    },
+    {
+      "feature": "has_cta",
+      "weight": 4.151,
+      "relativeImpactPercent": 2.7
+    },
+    {
+      "feature": "hook_quality_norm",
+      "weight": 3.915,
+      "relativeImpactPercent": 2.5
+    },
+    {
+      "feature": "has_subtitles",
+      "weight": -0.776,
+      "relativeImpactPercent": 0.5
+    },
+    {
+      "feature": "plat_twitter",
+      "weight": -0.819,
+      "relativeImpactPercent": 0.5
+    },
+    {
+      "feature": "has_question_hook",
+      "weight": -0.636,
+      "relativeImpactPercent": 0.4
+    },
+    {
+      "feature": "sentiment_score",
+      "weight": 0.108,
+      "relativeImpactPercent": 0.1
+    },
+    {
+      "feature": "is_peak_hour",
+      "weight": 0.037,
       "relativeImpactPercent": 0
     }
   ]

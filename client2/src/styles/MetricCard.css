@@ -1,0 +1,24 @@
+.metric-card {
+  padding: 1.25rem;
+  margin: 0;
+  text-align: left;
+  transition: border-color var(--transition-fast);
+  position: relative;
+}
+
+.metric-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-card p {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}

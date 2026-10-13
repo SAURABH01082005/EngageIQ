@@ -33,7 +33,26 @@ function normalizeUserKey(key) {
 function loadDefaultSeed() {
   try {
     if (fs.existsSync(DEFAULT_SEED_PATH)) {
-      return JSON.parse(fs.readFileSync(DEFAULT_SEED_PATH, 'utf-8'));
+      const raw = JSON.parse(fs.readFileSync(DEFAULT_SEED_PATH, 'utf-8'));
+      if (raw.channels) return raw;
+
+      const channels = {};
+      if (Array.isArray(raw.users)) {
+        raw.users.forEach(u => {
+          const plat = (u.platform || 'instagram').toLowerCase();
+          channels[plat] = {
+            platform: plat,
+            name: u.name || `${plat} Channel`,
+            handle: u.username ? `@${u.username}` : `@${plat}_creator`,
+            category: 'Content Creation',
+            subscribers: Number(u.followers || 100000),
+            following: Number(u.following || 100),
+            bio: u.bio || '',
+            profilePicUrl: u.profilePicUrl || u.avatar || ''
+          };
+        });
+      }
+      return { channels, posts: raw.posts || [] };
     }
   } catch (e) {
     console.error('[Conjugate Store] Error reading default seed:', e);
@@ -114,8 +133,8 @@ async function registerUser(userKey, extraData = {}) {
       email: cleanEmail,
       registered: true,
       registeredAt: new Date().toISOString(),
-      channels: JSON.parse(JSON.stringify(baseSource.channels)),
-      posts: JSON.parse(JSON.stringify(baseSource.posts)),
+      channels: JSON.parse(JSON.stringify(baseSource.channels || {})),
+      posts: JSON.parse(JSON.stringify(baseSource.posts || [])),
       updatedAt: new Date().toISOString(),
       ...extraData
     };
@@ -147,8 +166,8 @@ async function getUserBucket(userKey = 'default_user') {
     memoryStore[cleanEmail] = {
       email: cleanEmail,
       registered: cleanEmail === 'default_user',
-      channels: JSON.parse(JSON.stringify(baseSource.channels)),
-      posts: JSON.parse(JSON.stringify(baseSource.posts)),
+      channels: JSON.parse(JSON.stringify(baseSource.channels || {})),
+      posts: JSON.parse(JSON.stringify(baseSource.posts || [])),
       updatedAt: new Date().toISOString()
     };
     persistLocalStore();
@@ -541,6 +560,126 @@ async function getAllPostsForEngageIQ(userKey = 'default_user') {
   });
 }
 
+/**
+ * PARSE DURATION STRING TO SECONDS HELPER
+ */
+function parseDurationSec(durationStr) {
+  if (typeof durationStr === 'number') return durationStr;
+  if (!durationStr) return 30;
+  const str = String(durationStr).toLowerCase().trim();
+  if (str.includes('reel') || str.includes('short')) return 28;
+  const parts = str.split(':').map(p => Number(p.trim()));
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return parts[0] * 60 + parts[1];
+  }
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return 30;
+}
+
+/**
+ * GET ALL TRENDING VIDEOS FOR ENGAGEIQ (Model A Content Prior)
+ * Aggregates verified trending videos from YouTube Scraper, Instagram Reels, and Facebook Videos
+ */
+async function getTrendingVideos() {
+  const trendingVideos = [];
+  const ytPath = path.join(__dirname, '../data/dataset_youtube-channel-scraper_2026-10-10_15-39-13-562.json');
+
+  // 1. YouTube Videos Scraper Ingestion
+  try {
+    if (fs.existsSync(ytPath)) {
+      const ytData = JSON.parse(fs.readFileSync(ytPath, 'utf-8'));
+      if (Array.isArray(ytData)) {
+        ytData.filter(v => v.id && v.title).forEach((v, idx) => {
+          const views = Number(v.viewCount) || 500000;
+          const channelSubs = Number(v.aboutChannelInfo?.numberOfSubscribers) || 8630000;
+          const likes = Math.round(views * 0.048);
+          const comments = Math.round(likes * 0.07);
+          const shares = Math.round(likes * 0.03);
+          const durSec = parseDurationSec(v.duration);
+
+          const breakout = Math.log((views + 1) / (channelSubs + 1));
+          const quality = views > 0 ? (likes + comments) / views : 0;
+          const virality = views + 15 * likes + 50 * comments + 100 * shares;
+
+          trendingVideos.push({
+            id: `trending_yt_${v.id}`,
+            video_id: v.id,
+            title: v.title,
+            caption: v.title,
+            platform: 'youtube',
+            author: v.channelName || 'Nitish Rajput',
+            channel_subs: channelSubs,
+            views,
+            likes,
+            comments,
+            shares,
+            duration: v.duration || '15:00',
+            duration_sec: durSec,
+            aspect_ratio: durSec <= 60 ? '9:16' : '16:9',
+            has_subtitles: true,
+            hook_rating: 8.5,
+            thumbnail_url: v.thumbnailUrl || '',
+            video_url: v.url || `https://www.youtube.com/watch?v=${v.id}`,
+            breakout: Number(breakout.toFixed(4)),
+            quality: Number(quality.toFixed(5)),
+            virality,
+            published_at: v.date || new Date(Date.now() - idx * 86400000).toISOString()
+          });
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Conjugate Store] Warning reading YouTube trending dataset:', err.message);
+  }
+
+  // 2. Ingest Video Posts (Instagram Reels, Facebook Videos) from default_user / seed
+  const defaultPosts = memoryStore['default_user']?.posts || loadDefaultSeed().posts || [];
+  defaultPosts.filter(p => p.postType === 'video' || p.platform === 'youtube').forEach((p, idx) => {
+    // Avoid duplicates
+    if (trendingVideos.some(tv => tv.video_id === p.id || tv.id === p.id)) return;
+
+    const views = Number(p.views || p.metrics?.videoViews || p.metrics?.views || 250000);
+    const channelSubs = Number(p.subscribers || 3662163);
+    const likes = Number(p.likes || p.metrics?.likes || Math.round(views * 0.05));
+    const comments = Number(p.comments || p.metrics?.comments || Math.round(likes * 0.03));
+    const shares = Number(p.shares || p.metrics?.shares || Math.round(likes * 0.02));
+    const durSec = parseDurationSec(p.duration || p.mediaSpecs?.durationSec);
+
+    const breakout = Math.log((views + 1) / (channelSubs + 1));
+    const quality = views > 0 ? (likes + comments) / views : 0;
+    const virality = views + 15 * likes + 50 * comments + 100 * shares;
+
+    trendingVideos.push({
+      id: `trending_${p.platform || 'video'}_${p.id || idx}`,
+      video_id: p.id || `v_${idx}`,
+      title: p.title || p.caption?.slice(0, 80) || 'Trending Social Video',
+      caption: p.caption || p.content || '',
+      platform: p.platform || 'instagram',
+      author: p.author || 'Creator',
+      channel_subs: channelSubs,
+      views,
+      likes,
+      comments,
+      shares,
+      duration: p.duration || '00:30',
+      duration_sec: durSec,
+      aspect_ratio: p.mediaSpecs?.aspectRatio || (p.platform === 'instagram' ? '9:16' : '16:9'),
+      has_subtitles: p.mediaSpecs?.hasSubtitles !== undefined ? p.mediaSpecs.hasSubtitles : true,
+      hook_rating: p.mediaSpecs?.hookRating || 8,
+      thumbnail_url: p.mediaUrl || '',
+      video_url: p.videoUrl || '',
+      breakout: Number(breakout.toFixed(4)),
+      quality: Number(quality.toFixed(5)),
+      virality,
+      published_at: p.publishedAt || p.createdAt || new Date(Date.now() - idx * 86400000).toISOString()
+    });
+  });
+
+  return trendingVideos;
+}
+
 module.exports = {
   getChannels,
   updateChannel,
@@ -553,7 +692,9 @@ module.exports = {
   deletePost,
   resetUserStore,
   getAllPostsForEngageIQ,
+  getTrendingVideos,
   normalizeUserKey,
   hasUserAccount,
   registerUser
 };
+

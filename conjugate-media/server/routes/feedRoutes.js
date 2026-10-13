@@ -37,6 +37,26 @@ router.get('/feed/posts', async (req, res) => {
 });
 
 /**
+ * GET /api/feed/trending-videos
+ * Returns all normalized trending videos for EngageIQ Model A Content Prior & virality benchmark
+ */
+router.get('/feed/trending-videos', async (req, res) => {
+  try {
+    const videos = await conjugateStore.getTrendingVideos();
+    res.json({
+      success: true,
+      source: 'Conjugate Media Server (Port 5002)',
+      timestamp: new Date().toISOString(),
+      count: videos.length,
+      videos
+    });
+  } catch (error) {
+    console.error('[Conjugate Trending Videos Error]:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch trending videos.' });
+  }
+});
+
+/**
  * GET /api/feed/summary
  * Returns high-level summary of total likes, comments, shares, reach, and platform breakdown
  */

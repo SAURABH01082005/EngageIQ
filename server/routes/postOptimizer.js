@@ -8,6 +8,10 @@ const {
   predictImagePost,
   predictVideoPost
 } = require('../../ml/multimodalPredictor');
+const {
+  predictCandidatePost,
+  getTrendingBenchmarks
+} = require('../../ml/twoStageEngine');
 
 const mockDataPath = path.join(__dirname, '../data/platform_mock_data.json');
 
@@ -23,17 +27,21 @@ function getPlatformMockData() {
   return { platforms: {} };
 }
 
+const { predictWithMLService } = require('../utils/mlPredictorService');
+
 /**
- * Universal Post Draft Predictor (supports text, image, video)
+ * Universal Post Draft Predictor (Two-Stage Model A Content Prior + Model B Personal Lift)
+ * Makes active use of FastAPI ML microservice (Port 8000) & in-memory Two-Stage engines
  */
-router.post('/predict-draft', (req, res) => {
+router.post('/predict-draft', async (req, res) => {
   try {
     const {
       postType = 'text',
       platform = 'instagram',
       text = '',
       caption = '',
-      followers = 10000,
+      title = '',
+      followers = 12500,
       aspectRatio,
       imageType,
       slideCount,
@@ -41,16 +49,38 @@ router.post('/predict-draft', (req, res) => {
       durationSec,
       hasSubtitles,
       hookRating,
-      audioType
+      audioType,
+      userEmail
     } = req.body;
 
-    const contentText = text || caption || '';
+    const contentText = (text || caption || title || '').trim();
+    const cleanUserEmail = userEmail || req.headers['x-user-email'] || 'default_user';
+    const numFollowers = Number(followers) || 12500;
 
-    let prediction;
+    // 1. Run dynamic ML prediction via ML Predictor Service Bridge (FastAPI Port 8000 + Two-Stage Engine)
+    const mlResult = await predictWithMLService({
+      title: title || contentText.split('\n')[0].slice(0, 80),
+      caption: contentText,
+      text: contentText,
+      platform,
+      postType,
+      followers: numFollowers,
+      durationSec: Number(durationSec) || (postType === 'video' ? 28 : 0),
+      aspectRatio: aspectRatio || (postType === 'video' ? '9:16' : '1:1'),
+      hasSubtitles: hasSubtitles !== undefined ? Boolean(hasSubtitles) : (postType === 'video'),
+      hookRating: Number(hookRating) || 8,
+      userEmail: cleanUserEmail,
+      imageType: imageType || 'carousel',
+      slideCount: Number(slideCount) || 5,
+      hasTextOverlay: hasTextOverlay !== undefined ? Boolean(hasTextOverlay) : true
+    });
+
+    // 2. Multimodal feature extraction for supplementary visual/text inspection
+    let baseMultimodal;
     if (postType === 'video') {
-      prediction = predictVideoPost({
+      baseMultimodal = predictVideoPost({
         platform,
-        followers: Number(followers) || 10000,
+        followers: numFollowers,
         durationSec: Number(durationSec) || 28,
         aspectRatio: aspectRatio || '9:16',
         hasSubtitles: Boolean(hasSubtitles),
@@ -59,9 +89,9 @@ router.post('/predict-draft', (req, res) => {
         caption: contentText
       });
     } else if (postType === 'image') {
-      prediction = predictImagePost({
+      baseMultimodal = predictImagePost({
         platform,
-        followers: Number(followers) || 10000,
+        followers: numFollowers,
         aspectRatio: aspectRatio || '4:5',
         imageType: imageType || 'carousel',
         slideCount: Number(slideCount) || 5,
@@ -69,15 +99,68 @@ router.post('/predict-draft', (req, res) => {
         caption: contentText
       });
     } else {
-      prediction = predictTextPost({
+      baseMultimodal = predictTextPost({
         text: contentText,
         platform,
-        followers: Number(followers) || 10000,
+        followers: numFollowers,
         postType: 'text'
       });
     }
 
-    res.json(prediction);
+    // Dynamic Best Time to Post by Platform & Category
+    const normPlatform = (platform || 'instagram').toLowerCase().replace('x', 'twitter');
+    const platformTiming = {
+      instagram: { timeSlot: '6:30 PM – 8:30 PM', days: 'Tuesday, Thursday, Friday', confidence: `${Math.min(97, 82 + Math.round(mlResult.engagementScore * 0.15))}%` },
+      twitter: { timeSlot: '8:30 AM – 10:30 AM & 6:00 PM – 7:30 PM', days: 'Tuesday – Thursday', confidence: `${Math.min(96, 80 + Math.round(mlResult.engagementScore * 0.16))}%` },
+      linkedin: { timeSlot: '7:45 AM – 9:30 AM & 5:00 PM – 6:30 PM', days: 'Tuesday, Wednesday, Thursday', confidence: `${Math.min(98, 85 + Math.round(mlResult.engagementScore * 0.14))}%` },
+      facebook: { timeSlot: '6:30 PM – 9:00 PM', days: 'Thursday – Saturday', confidence: `${Math.min(95, 78 + Math.round(mlResult.engagementScore * 0.16))}%` },
+      youtube: { timeSlot: '5:00 PM – 8:00 PM', days: 'Wednesday – Sunday', confidence: `${Math.min(96, 84 + Math.round(mlResult.engagementScore * 0.14))}%` }
+    };
+    const bestTime = platformTiming[normPlatform] || platformTiming.instagram;
+
+    // Combined Response blending multimodal specs + dynamic machine learning
+    const response = {
+      ...baseMultimodal,
+      engagementScore: mlResult.engagementScore,
+      tier: mlResult.tier,
+      growth: mlResult.growth,
+      confidence: mlResult.confidence,
+      breakoutRating: mlResult.breakoutRating,
+      breakoutScore: mlResult.breakoutScore,
+      qualityScore: mlResult.qualityScore,
+      viralityIndex: mlResult.viralityIndex,
+      expectedMetrics: mlResult.expectedMetrics,
+      predictedMetrics: mlResult.predictedMetrics,
+      twoStageBreakdown: mlResult.twoStageBreakdown,
+      mlMeta: {
+        ...(baseMultimodal.mlMeta || {}),
+        ...(mlResult.mlMeta || {}),
+        engineUsed: mlResult.engineUsed,
+        engineLabel: mlResult.engineLabel
+      },
+      suggestions: [
+        ...(mlResult.suggestions || []),
+        ...((baseMultimodal.improvements || []).filter(imp => !(mlResult.suggestions || []).some(s => s.type === imp.type)).map(imp => ({
+          type: imp.type || 'format',
+          title: imp.title,
+          impact: imp.lift || '+15% Reach',
+          description: imp.description
+        })))
+      ],
+      improvements: [
+        ...(mlResult.suggestions || []),
+        ...((baseMultimodal.improvements || []).filter(imp => !(mlResult.suggestions || []).some(s => s.type === imp.type)).map(imp => ({
+          type: imp.type || 'format',
+          title: imp.title,
+          impact: imp.lift || '+15% Reach',
+          description: imp.description
+        })))
+      ],
+      bestTimeToPost: bestTime,
+      bestPostingTime: `${bestTime.timeSlot} on ${bestTime.days}`
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Predict Draft Error:', error);
     res.status(500).json({ error: 'Failed to predict engagement for draft.' });
@@ -89,7 +172,11 @@ router.post('/predict-draft', (req, res) => {
  */
 router.post('/predict-video', (req, res) => {
   try {
-    const prediction = predictVideoPost(req.body);
+    const postData = req.body || {};
+    const prediction = predictCandidatePost({
+      ...postData,
+      postType: 'video'
+    });
     res.json(prediction);
   } catch (error) {
     console.error('Predict Video Error:', error);
@@ -98,21 +185,26 @@ router.post('/predict-video', (req, res) => {
 });
 
 /**
- * Platform Trending Topics & Live Insights
+ * Platform Trending Topics & Live Video Insights from Conjugate Media
  */
 router.get('/trending-topics', (req, res) => {
   try {
     const { platform } = req.query;
     const data = getPlatformMockData();
+    const benchmarks = getTrendingBenchmarks();
+
+    const response = {
+      ...data,
+      trendingVideos: benchmarks.trendingVideos || [],
+      benchmarks: benchmarks.benchmarks || {}
+    };
 
     if (platform && data.platforms[platform.toLowerCase()]) {
-      return res.json({
-        platform: platform.toLowerCase(),
-        data: data.platforms[platform.toLowerCase()]
-      });
+      response.platform = platform.toLowerCase();
+      response.platformData = data.platforms[platform.toLowerCase()];
     }
 
-    res.json(data);
+    res.json(response);
   } catch (error) {
     console.error('Trending Topics Error:', error);
     res.status(500).json({ error: 'Failed to retrieve trending topics.' });

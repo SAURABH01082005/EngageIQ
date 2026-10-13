@@ -1,0 +1,16 @@
+.insights {
+  margin: 20px;
+}
+
+.insights h2 {
+  color: #333;
+}
+
+.insights ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.insights li {
+  margin-bottom: 5px;
+}

@@ -1,0 +1,73 @@
+.export-report-page .export-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.export-report-page .export-card {
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 240px;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all var(--transition-normal);
+}
+
+.export-report-page .export-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.export-report-page .export-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.export-report-page .export-card__hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  flex: 1;
+}
+
+.export-report-page .export-card .form-group {
+  margin-bottom: 0;
+  margin-top: auto;
+}
+
+.export-report-page .export-card select {
+  max-width: none;
+}
+
+.export-report-page .export-card--action .btn {
+  align-self: flex-start;
+}
+
+.export-report-page .toast {
+  padding: 0.85rem 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  width: 100%;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .export-report-page .export-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .export-report-page .export-card:first-child {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+}

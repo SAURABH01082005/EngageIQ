@@ -1,23 +1,35 @@
 /**
  * EngageIQ Server - AI Assistant Smart Intent Router
  * 
- * Target 1 Logic:
- * - For FIXED queries listed (trending topics, best time to post, Reels vs Static, 
- *   reach drop diagnosis, post recommendation, cross-platform comparison, metrics snapshot):
- *   -> Routes to EngageIQ ML Model & Dynamic Analytics Engine.
- * - For RANDOM / OPEN-ENDED queries:
- *   -> Routes to Gemini AI Agent (Google Generative AI).
+ * Logic:
+ * Whatever the user's query is (prediction, recommendation, best time, drop diagnosis,
+ * Reels vs Static, or open-ended/random question):
+ * 1. Computes the underlying data and predictions using the Two-Stage ML Model (FastAPI Port 8000),
+ *    Ridge regression in-feed engine, and live platform analytics.
+ * 2. Asks Gemini Flash 1.5 (Google Generative AI) to FRAME the final structured response,
+ *    fusing the ML ground-truth metrics, live trending topics, and Model B audience taste.
+ * 3. Supports explicit 'ml_only' mode if the user requests raw data without framing.
  */
 
 const { processNaturalLanguageQuery } = require('./nlpQueryEngine');
-const { queryGeminiAgent } = require('./geminiAgent');
+const { frameWithGeminiFlash, queryGeminiAgent } = require('./geminiAgent');
 
-// Fixed query patterns for ML Engine
+// Fixed query patterns for analytics & ML detection
 const FIXED_QUERY_PATTERNS = [
+  // 0. Post Prediction & Forecasting (ML Model Inference)
+  {
+    id: 'prediction',
+    regex: /(predict|prediction|forecast|estimate\s+engagement|score\s+my|how\s+will\s+.*perform|what\s+reach\s+will|how\s+many\s+likes|rate\s+my\s+post|score\s+this|performance\s+prediction|predict\s+engagement)/i
+  },
   // 1. Post Recommendations / What should I post next
   {
     id: 'recommendation',
     regex: /(what\s+should\s+i\s+post|post\s+next|next\s+post|increase\s+engagement|recommendation|how\s+to\s+increase\s+engagement)/i
+  },
+  // 1b. Audience Content Taste & Preference (Model B)
+  {
+    id: 'audience_taste',
+    regex: /(what\s+type\s+of\s+content|audience\s+like|audience\s+taste|audience\s+type|who\s+is\s+my\s+audience|what\s+does\s+my\s+audience\s+like|content\s+preference|model\s+b)/i
   },
   // 2. Trending topics & hashtags
   {
@@ -76,47 +88,40 @@ function isFixedListedQuery(question) {
  * @param {Array} connectedPlatforms - List of active platforms
  * @param {string} mode - 'auto' | 'ml_only' | 'gemini_only'
  * @param {string} userId - User identifier
+ * @param {string} apiKey - Optional custom Gemini API key
  */
-async function routeAIQuery(question, connectedPlatforms = [], mode = 'auto', userId = 'default_user') {
+async function routeAIQuery(question, connectedPlatforms = [], mode = 'auto', userId = 'default_user', apiKey = '') {
   const cleanQuery = (question || '').trim();
   const classification = isFixedListedQuery(cleanQuery);
 
-  // Forced ML mode
+  // Forced ML mode: Returns raw mathematical / analytical ML output without Gemini framing
   if (mode === 'ml_only') {
     const mlResult = await processNaturalLanguageQuery(cleanQuery, connectedPlatforms, userId);
     return {
       ...mlResult,
-      engineUsed: 'ml_model',
-      engineLabel: 'EngageIQ Dynamic ML Model & Analytics Engine',
+      engineUsed: mlResult.engineUsed || 'ml_model',
+      engineLabel: mlResult.engineLabel || 'EngageIQ Dynamic ML Model & Analytics Engine',
       routingReason: 'User selected ML Model Only mode'
     };
   }
 
-  // Forced Gemini mode
-  if (mode === 'gemini_only') {
-    const geminiResult = await queryGeminiAgent(cleanQuery, { platforms: connectedPlatforms, userId });
-    return {
-      ...geminiResult,
-      routingReason: 'User selected Gemini Agent Only mode'
-    };
-  }
+  // Auto Mode & Gemini Mode:
+  // Whatever the query is, compute the ML/analytical data first,
+  // then ask Gemini Flash 1.5 to frame the structured final response.
+  const mlResult = await processNaturalLanguageQuery(cleanQuery, connectedPlatforms, userId);
 
-  // Auto Mode: Fixed Query -> ML Engine; Random Query -> Gemini Agent
-  if (classification.isFixed) {
-    const mlResult = await processNaturalLanguageQuery(cleanQuery, connectedPlatforms, userId);
-    return {
-      ...mlResult,
-      engineUsed: 'ml_model',
-      engineLabel: 'EngageIQ Dynamic ML Model & Analytics Engine',
-      routingReason: `Matched fixed analytical query pattern (${classification.patternId})`
-    };
-  } else {
-    const geminiResult = await queryGeminiAgent(cleanQuery, { platforms: connectedPlatforms, userId });
-    return {
-      ...geminiResult,
-      routingReason: 'Random / Open-ended query routed to Gemini AI Agent'
-    };
-  }
+  const framedResult = await frameWithGeminiFlash(cleanQuery, mlResult, {
+    platforms: connectedPlatforms,
+    userId,
+    apiKey
+  });
+
+  return {
+    ...framedResult,
+    routingReason: classification.isFixed
+      ? `Two-Stage ML Engine computed ground truth (${classification.patternId}) -> Framed by Gemini 1.5 Flash`
+      : 'Open-ended strategic query analyzed & framed by Gemini 1.5 Flash with live trends & audience taste'
+  };
 }
 
 module.exports = {

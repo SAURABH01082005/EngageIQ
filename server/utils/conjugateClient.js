@@ -189,8 +189,45 @@ async function verifyConjugateAccount(userKey = 'default_user') {
   return { hasAccount: false, email: cleanEmail };
 }
 
+/**
+ * Fetch trending videos from Conjugate Media for Model A training & virality benchmark
+ */
+async function fetchConjugateTrendingVideos() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+    const res = await fetch(`${CONJUGATE_SERVER_URL}/api/feed/trending-videos`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.videos && Array.isArray(data.videos)) {
+        return data.videos;
+      }
+    }
+  } catch (err) {}
+
+  // Resilient fallback: call conjugateStore directly
+  try {
+    const conjugateStore = require('../../conjugate-media/server/services/conjugateStore');
+    if (typeof conjugateStore.getTrendingVideos === 'function') {
+      const vids = await conjugateStore.getTrendingVideos();
+      if (vids && vids.length > 0) return vids;
+    }
+  } catch (e) {
+    console.warn('[ConjugateClient] Could not fallback to direct conjugateStore.getTrendingVideos:', e.message);
+  }
+
+  return [];
+}
+
 module.exports = {
   fetchConjugatePosts,
   fetchConjugateChannels,
+  fetchConjugateTrendingVideos,
   verifyConjugateAccount
 };
+

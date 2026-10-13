@@ -1,0 +1,64 @@
+.recommendations-page .recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.recommendations-page .recommendation-card {
+  padding: 2.25rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all var(--transition-normal);
+}
+
+.recommendations-page .recommendation-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  transform: none;
+}
+
+.recommendations-page .recommendation-card h3 {
+  margin-top: 0;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.recommendations-page .recommendation-card p {
+  color: var(--text-primary);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-weight: 700;
+  margin-bottom: 0;
+  background: linear-gradient(135deg, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .recommendations-page .recommendations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendations-page .recommendation-card:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .recommendations-page .recommendation-card:nth-child(1),
+  .recommendations-page .recommendation-card:nth-child(2) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+}

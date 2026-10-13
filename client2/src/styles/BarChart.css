@@ -1,0 +1,19 @@
+.chart-container {
+  padding: 1.25rem;
+  border-radius: var(--border-radius-lg);
+  margin: 0;
+}
+
+.chart-container h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.bar-chart {
+  display: block;
+  margin: 0 auto;
+}

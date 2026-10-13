@@ -1,0 +1,96 @@
+.summary-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.15rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  border-radius: var(--border-radius-lg);
+  padding: 1.35rem;
+  text-align: center;
+  transition: all var(--transition-normal);
+}
+
+.summary-card:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 transparent;
+  transform: none;
+}
+
+.summary-card h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #fff, var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1.15rem;
+}
+
+.company-card {
+  border-radius: var(--border-radius-lg);
+  padding: 1.35rem;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+
+.company-card:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow:
+    var(--glass-shadow),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: none;
+}
+
+.company-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: var(--text-primary);
+}
+
+.company-detail {
+  margin-bottom: 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.company-detail strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.company-links {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

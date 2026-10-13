@@ -1,5 +1,13 @@
-// ml/multimodalPredictor.js
-const Sentiment = require("sentiment");
+let Sentiment;
+try {
+  Sentiment = require('sentiment');
+} catch (e) {
+  try {
+    Sentiment = require('../server/node_modules/sentiment');
+  } catch (err2) {
+    Sentiment = class { analyze() { return { score: 0 }; } };
+  }
+}
 const sentimentAnalyzer = new Sentiment();
 const { predictWithLearnedModel, trainModelOnPastPosts } = require("./dynamicTrainer");
 

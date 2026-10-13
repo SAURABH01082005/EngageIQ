@@ -1,0 +1,87 @@
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.15rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-cards .card {
+  padding: 1.35rem;
+  text-align: center;
+}
+
+.summary-cards .card h1 {
+  font-size: 1.35rem;
+  margin-bottom: 0;
+  background: linear-gradient(135deg, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.summary-cards .card h3 {
+  font-size: 0.8rem;
+  margin-bottom: 0.45rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.summary-cards .card p {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.main-card {
+  border-radius: var(--border-radius-lg);
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.main-card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1.15rem;
+  color: var(--text-primary);
+}
+
+.analysis-content p {
+  margin-bottom: 0.85rem;
+  font-size: 0.98rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.analysis-content strong {
+  color: var(--text-primary);
+}
+
+.analysis-content a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+.analysis-content a:hover {
+  text-decoration: underline;
+}
+
+.analysis-media {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.analysis-media img,
+.analysis-media video {
+  max-width: 100%;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.company-analysis-actions {
+  display: flex;
+  justify-content: flex-end;
+}

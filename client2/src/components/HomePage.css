@@ -1,0 +1,109 @@
+.home-page .page-layout__content {
+  justify-content: center;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.platform-card {
+  border-radius: var(--border-radius-lg);
+  padding: 1.75rem 1.5rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  min-height: 150px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.platform-card:hover:not(:disabled) {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  transform: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.platform-card.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.platform-card.connected {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.12);
+  cursor: default;
+}
+
+.platform-card:disabled {
+  cursor: default;
+}
+
+.platform-icon {
+  font-size: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.platform-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.platform-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  min-width: 24px;
+}
+
+.arrow {
+  font-size: 1.2rem;
+  color: var(--accent-primary);
+  transition: transform var(--transition-fast);
+}
+
+.platform-card:hover:not(:disabled) .arrow {
+  transform: translateX(3px);
+}
+
+.checkmark {
+  font-size: 1.2rem;
+  color: #10b981;
+  font-weight: bold;
+}
+
+.connection-summary {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--border-radius);
+  padding: 0.85rem 1.25rem;
+  text-align: center;
+}
+
+.home-page-actions {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .platform-grid {
+    grid-template-columns: 1fr;
+  }
+}

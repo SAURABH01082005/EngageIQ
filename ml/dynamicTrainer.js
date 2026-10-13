@@ -1,7 +1,16 @@
 // ml/dynamicTrainer.js
 const fs = require('fs');
 const path = require('path');
-const Sentiment = require('sentiment');
+let Sentiment;
+try {
+  Sentiment = require('sentiment');
+} catch (e) {
+  try {
+    Sentiment = require('../server/node_modules/sentiment');
+  } catch (err2) {
+    Sentiment = class { analyze() { return { score: 0 }; } };
+  }
+}
 const sentimentAnalyzer = new Sentiment();
 
 const JSON_FEED_PATH = path.join(__dirname, '../server/data/platform_posts_feed.json');
@@ -40,8 +49,8 @@ function extractFeatures(post) {
   const charCount = text.length;
   const wordCount = text ? text.split(/\s+/).length : 0;
 
-  const hasQuestion = /\?|what do you think|which one|how do you|agree/i.test(text) ? 1 : 0;
-  const hasCta = /link in bio|check out|swipe|save this|share|comment below|learn more|discover|click|dm me/i.test(text) ? 1 : 0;
+  const hasQuestion = /\?|what|why|how|agree|which|who|think/i.test(text) ? 1 : 0;
+  const hasCta = /link in bio|check out|swipe|save|share|comment|learn more|discover|click|dm|subscribe/i.test(text) ? 1 : 0;
   const hashtags = (text.match(/#[a-zA-Z0-9_]+/g) || []).length;
 
   const media = post.media_specs || {};

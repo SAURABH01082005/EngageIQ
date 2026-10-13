@@ -1,0 +1,53 @@
+Note all features of EngageIQ should be present (you can rectify and edit the project ) . First read project and analyze the features of EngageIQ , i want that features in output , you can change the code.
+
+i want to use only trending videos , user's past post data only for post prediction and model training. Figure out the robust algorithm and edit engageIQ with dtailed plan (use ml training models like gradient boost , random forest,etc)
+
+ use 'conjugate media' as data server provider (which provides the all platform data for a user) and edit this 'EngageIQ' project to acheive what we have discussed . (take data from 'conjugate media' from it's server and then use that json data to train our ml model of EngageIQ) . Note: ('Conjugate media is an seperate module of this project , it's only job is to provide data of a user and manage that data)
+
+
+basic idea of final product:
+Trending videos ──► Model A (content prior) ──┐
+                                              ├─► Model B (personal lift model) ─► rating + suggestions
+User history ─────► baseline + features ──────┘
+
+ Theory 1:                       Step 1: Collect trending data
+                        Step 2: Model A, the content prior (trained on trending videos)
+                                Targets (they don’t depend only on channel size):
+
+                        prediction of engagement rating :  breakout = log((views + 1) / (channel_subs + 1)), meaning views relative to audience size
+                        prediction of engagement quality :  quality = (likes + comments) / views, meaning how much viewers react once they see it
+
+                        step 3: Model B, the personal lift model
+                                For each user, model how much their past engagement differs from the trending baseline:
+
+                                        lift = actual_engagement – baseline_engagement
+
+                                    Train a separate model for each metric (one for breakout lift, one for quality lift) using features like:
+
+                                        post metadata (length, title length, day, hour, etc.)
+                                        user embedding distance to the video’s topic
+                                        topic embedding distance to past posts
+
+                        step 4: Final score: combine everything
+                                    For each candidate post, the final score is:
+
+                                        final = baseline + ModelA_pred + ModelB_pred
+                                        
+
+                                    This gives you a personalized prediction that accounts for both content popularity and the user’s unique taste.
+
+                        Step 5: Serving
+                                    Use the same infrastructure as before:
+
+                                        load Model A for all users (it’s universal)
+                                        load each user’s Model B parameters (lightweight)
+                                        compute the combined score and rank the suggestions.
+ 
+
+ Theory 2: use trending videos and calculate it's virality by formula like virality = views + 15*likes + 50*comments + 100*shares .
+ Check the user's platform oriented audience taste and accordingly predicts engagement score of a post (given by user in our platform).
+
+ 
+ use many models (if required) ridge, random forest, XGBoost ,etc . whataver is useful
+
+ avoid editing much 'condjugate-media' code (if it does not contain required field ,then you can add in the data)

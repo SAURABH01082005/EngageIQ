@@ -1,0 +1,41 @@
+.content-comparison {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin: 1rem 0;
+}
+
+.content-comparison h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.comparison-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.comparison-item:hover {
+  background-color: #f8f9fa;
+}
+
+.comparison-item:last-child {
+  border-bottom: none;
+}
+
+.comparison-item span {
+  font-weight: 500;
+  color: #495057;
+}
+
+.comparison-item span:first-child {
+  font-weight: 600;
+  color: #212529;
+}

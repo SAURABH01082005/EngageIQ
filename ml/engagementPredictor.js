@@ -1,4 +1,14 @@
-const Sentiment = require("sentiment");
+const path = require('path');
+let Sentiment;
+try {
+  Sentiment = require("sentiment");
+} catch (e) {
+  try {
+    Sentiment = require(path.join(__dirname, '../server/node_modules/sentiment'));
+  } catch (err2) {
+    Sentiment = class { analyze() { return { score: 0 }; } };
+  }
+}
 
 const sentimentAnalyzer = new Sentiment();
 

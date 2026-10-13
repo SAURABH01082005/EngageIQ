@@ -1,0 +1,46 @@
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1.15rem;
+}
+
+.company-card {
+  border-radius: var(--border-radius-lg);
+  padding: 1.35rem;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+
+.company-card:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow:
+    var(--glass-shadow),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: none;
+}
+
+.company-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: var(--text-primary);
+}
+
+.company-detail {
+  margin-bottom: 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.company-detail strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.company-cards-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}

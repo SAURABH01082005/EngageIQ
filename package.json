@@ -9,5 +9,8 @@
     "conjugate:server": "cd conjugate-media/server && npm start",
     "conjugate:client": "cd conjugate-media/client && npm run dev",
     "build:all": "cd client && npm run build && cd ../conjugate-media/client && npm run build"
+  },
+  "dependencies": {
+    "sentiment": "^5.0.2"
   }
 }
