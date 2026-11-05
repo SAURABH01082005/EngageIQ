@@ -5,16 +5,18 @@ import '../styles/Navbar.css';
 
 const PLATFORMS = [
   { id: 'all', label: 'All Feeds', icon: '🌐', className: '' },
-  { id: 'instagram', label: 'Instagram', icon: '📸', className: 'ig' },
-  { id: 'twitter', label: 'X (Twitter)', icon: '𝕏', className: 'tw' },
-  { id: 'linkedin', label: 'LinkedIn', icon: '🔗', className: 'li' },
-  { id: 'facebook', label: 'Facebook', icon: '👥', className: 'fb' },
   { id: 'youtube', label: 'YouTube', icon: '▶️', className: 'yt' },
+  { id: 'instagram', label: 'Instagram', icon: '📸', className: 'ig' },
+  { id: 'facebook', label: 'Facebook', icon: '👥', className: 'fb' },
+  { id: 'linkedin', label: 'LinkedIn', icon: '🔗', className: 'li' },
+  { id: 'twitter', label: 'X (Twitter)', icon: '𝕏', className: 'tw' }
 ];
 
 export default function Navbar({
   selectedPlatform,
   onSelectPlatform,
+  activeView = 'feed',
+  onSelectView,
   currentUser,
   onOpenAuth
 }) {
@@ -28,11 +30,36 @@ export default function Navbar({
 
   return (
     <header className="cm-navbar">
-      {/* Brand */}
-      <div className="cm-nav-brand" onClick={() => onSelectPlatform('all')}>
-        <span className="cm-nav-logo">💫</span>
-        <span>Conjugate Media</span>
-        <span className="cm-nav-subtext">Simulator</span>
+      {/* Left: Brand & View Switcher */}
+      <div className="cm-nav-left">
+        <div className="cm-nav-brand" onClick={() => onSelectPlatform('all')}>
+          <span className="cm-nav-logo">💫</span>
+          <span>Conjugate Media</span>
+          <span className="cm-nav-subtext">Simulator</span>
+        </div>
+
+        {/* View Switcher: Feed vs Trending */}
+        {onSelectView && (
+          <div className="cm-nav-view-switcher">
+            <button
+              type="button"
+              className={`cm-nav-view-btn ${activeView === 'feed' ? 'active' : ''}`}
+              onClick={() => onSelectView('feed')}
+            >
+              <span>📱</span>
+              <span>Creator Feed & Studio</span>
+            </button>
+            <button
+              type="button"
+              className={`cm-nav-view-btn ${activeView === 'trending' ? 'active trending-active' : ''}`}
+              onClick={() => onSelectView('trending')}
+            >
+              <span>🔥</span>
+              <span>Trending Radar</span>
+              <span className="cm-trending-pill-tag">Live</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Platform Switcher on Navbar */}

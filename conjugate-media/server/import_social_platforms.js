@@ -8,7 +8,13 @@ const USERS_PATH = path.join(dataDir, 'conjugate_users.json');
 
 function loadJson(prefix) {
   const files = fs.readdirSync(dataDir);
-  const target = files.find(f => f.toLowerCase().includes(prefix) && f.endsWith('.json'));
+  let target;
+  if (prefix === 'facebook') target = files.find(f => f.toLowerCase().includes('facebook-posts') && f.endsWith('.json'));
+  else if (prefix === 'linkedin') target = files.find(f => f.toLowerCase().includes('linkedin-profile') && f.endsWith('.json'));
+  else if (prefix === 'instagram') target = files.find(f => f.toLowerCase().includes('instagram-profile') && f.endsWith('.json'));
+  else if (prefix === 'youtube') target = files.find(f => f.toLowerCase().includes('youtube-channel') && f.endsWith('.json'));
+  else if (prefix === 'twitter') target = files.find(f => f.toLowerCase().includes('twitter-user') && f.endsWith('.json'));
+  if (!target) target = files.find(f => f.toLowerCase().includes(prefix) && f.endsWith('.json'));
   if (!target) {
     console.warn(`[Skip] No file found for platform: ${prefix}`);
     return null;

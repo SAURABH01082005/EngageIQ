@@ -414,6 +414,39 @@ function getAudienceTasteProfile(userEmail = 'default_user') {
 function getTrendingBenchmarks() {
   const model = readModelArtifact();
   let trendingVideos = [];
+  try {
+    const trendingStore = require('../conjugate-media/server/services/trendingStore');
+    const allItems = trendingStore.loadAllTrendingItems();
+    if (allItems && allItems.length > 0) {
+      trendingVideos = allItems.slice(0, 25).map(it => ({
+        id: it.rawId || it.id,
+        title: it.title,
+        platform: it.platform,
+        views: it.views,
+        likes: it.likes,
+        comments: it.comments,
+        shares: it.shares,
+        duration: it.duration || '02:30',
+        breakout: it.breakoutScore || 0,
+        quality: it.engagementRate ? parseFloat(it.engagementRate) / 100 : 0.05,
+        virality: it.viralityScore || (it.views + 15 * it.likes),
+        thumbnailUrl: it.thumbnailUrl || '',
+        url: it.videoUrl || ''
+      }));
+    }
+  } catch (err) {}
+  if (trendingVideos.length > 0) {
+    return {
+      trendingVideos,
+      audienceTaste: getAudienceTasteProfile('default_user'),
+      benchmarks: {
+        avgBreakout: model?.model_A?.weights?.mean_breakout || -0.92,
+        avgQuality: model?.model_A?.weights?.mean_quality || 0.051,
+        userBreakoutLift: model?.model_B?.mean_lifts?.mean_breakout_lift || 0.15,
+        platformTaste: model?.model_B?.platform_audience_taste || {}
+      }
+    };
+  }
 
   try {
     if (fs.existsSync(YT_SCRAPER_PATH)) {

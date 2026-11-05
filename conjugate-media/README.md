@@ -70,3 +70,25 @@ From the project root:
 5. **Interactive Modulators**: Increase or decrease **Likes**, **Comments**, **Shares**, **Dislikes**, **Views**, and **Reach** on individual post cards.
 6. **Community Comments**: Add comments with automated real-time **NLP Sentiment Scoring** (`positive`, `neutral`, `negative`).
 7. **Live EngageIQ Dynamic Feedback**: Any modification in Conjugate Media immediately updates EngageIQ dashboards, timelines, sentiment analytics, and ML Ridge Regression predictions for that user email!
+
+## 🌐 External Trending Data API
+
+Other websites can fetch normalized trending data for one social platform from:
+
+```text
+GET http://localhost:5002/api/feed/trending-videos/:platform
+```
+
+Supported platform values are `youtube`, `instagram`, `facebook`, `linkedin`, `twitter`, and `x` (`x` is an alias for `twitter`). The response includes `success`, `timestamp`, canonical `platform`, `count`, and a `videos` array. The existing `GET /api/feed/trending-videos` endpoint continues to return all platforms.
+
+Example:
+
+```js
+const response = await fetch('http://localhost:5002/api/feed/trending-videos/instagram');
+if (!response.ok) {
+  throw new Error(`Trending API failed: ${response.status}`);
+}
+const { videos } = await response.json();
+```
+
+The server's CORS middleware permits cross-origin requests. Replace `localhost:5002` with the deployed Conjugate Media server URL when calling this API from another website.

@@ -8,6 +8,9 @@
 const express = require('express');
 const router = express.Router();
 const conjugateStore = require('../services/conjugateStore');
+const trendingStore = require('../services/trendingStore');
+
+const TRENDING_PLATFORMS = new Set(['youtube', 'instagram', 'facebook', 'linkedin', 'twitter', 'x']);
 
 function getRequestUserEmail(req) {
   return req.headers['x-user-email'] || req.query.userEmail || req.body?.userEmail || req.headers['x-user-id'] || 'default_user';
@@ -42,17 +45,48 @@ router.get('/feed/posts', async (req, res) => {
  */
 router.get('/feed/trending-videos', async (req, res) => {
   try {
-    const videos = await conjugateStore.getTrendingVideos();
+    const trendingItems = trendingStore.loadAllTrendingItems();
     res.json({
       success: true,
       source: 'Conjugate Media Server (Port 5002)',
       timestamp: new Date().toISOString(),
-      count: videos.length,
-      videos
+      count: trendingItems.length,
+      videos: trendingItems
     });
   } catch (error) {
     console.error('[Conjugate Trending Videos Error]:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch trending videos.' });
+  }
+});
+
+/**
+ * GET /api/feed/trending-videos/:platform
+ * Returns normalized trending videos for a single platform to external consumers
+ */
+router.get('/feed/trending-videos/:platform', (req, res) => {
+  try {
+    const requestedPlatform = req.params.platform.toLowerCase();
+    if (!TRENDING_PLATFORMS.has(requestedPlatform)) {
+      return res.status(400).json({
+        error: `Unsupported platform: ${req.params.platform}`,
+        supportedPlatforms: ['youtube', 'instagram', 'facebook', 'linkedin', 'twitter', 'x']
+      });
+    }
+
+    const platform = requestedPlatform === 'x' ? 'twitter' : requestedPlatform;
+    const videos = trendingStore.getTrendingItems({ platform });
+
+    res.json({
+      success: true,
+      source: 'Conjugate Media Server (Port 5002)',
+      timestamp: new Date().toISOString(),
+      platform,
+      count: videos.length,
+      videos
+    });
+  } catch (error) {
+    console.error('[Conjugate Platform Trending Error]:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch platform trending videos.' });
   }
 });
 
@@ -74,61 +108,50 @@ router.get('/feed/summary', async (req, res) => {
     let totalViews = 0;
 
     const platformBreakdown = {
-      instagram: { likes: 0, comments: 0, shares: 0, reach: 0, postsCount: 0 },
-      facebook: { likes: 0, comments: 0, shares: 0, reach: 0, postsCount: 0 },
-      twitter: { likes: 0, comments: 0, shares: 0, reach: 0, postsCount: 0 },
-      linkedin: { likes: 0, comments: 0, shares: 0, reach: 0, postsCount: 0 }
+      instagram: 0,
+      facebook: 0,
+      twitter: 0,
+      linkedin: 0
     };
 
-    posts.forEach(p => {
-      const plat = (p.platform || 'instagram').toLowerCase().replace('x', 'twitter');
-      const l = p.metrics?.likes || 0;
-      const c = p.metrics?.comments || 0;
-      const s = p.metrics?.shares || 0;
-      const d = p.metrics?.dislikes || 0;
-      const r = p.metrics?.reach || 0;
-      const v = p.metrics?.video_views || 0;
-
-      totalLikes += l;
-      totalComments += c;
-      totalShares += s;
-      totalDislikes += d;
-      totalReach += r;
-      totalViews += v;
-
-      if (!platformBreakdown[plat]) {
-        platformBreakdown[plat] = { likes: 0, comments: 0, shares: 0, reach: 0, postsCount: 0 };
+    posts.forEach((p) => {
+      const plat = (p.platform || 'instagram').toLowerCase();
+      if (platformBreakdown[plat] !== undefined) {
+        platformBreakdown[plat]++;
       }
-      platformBreakdown[plat].likes += l;
-      platformBreakdown[plat].comments += c;
-      platformBreakdown[plat].shares += s;
-      platformBreakdown[plat].reach += r;
-      platformBreakdown[plat].postsCount += 1;
+      const m = p.metrics || {};
+      totalLikes += Number(m.likes || 0);
+      totalComments += Number(m.comments || 0);
+      totalShares += Number(m.shares || 0);
+      totalDislikes += Number(m.dislikes || 0);
+      totalReach += Number(m.reach || 0);
+      totalViews += Number(p.views || m.views || 0);
     });
 
-    const totalEngagements = totalLikes + totalComments + totalShares;
-    const engagementRate = totalReach > 0 ? ((totalEngagements / totalReach) * 100).toFixed(2) + '%' : '0%';
+    const totalInteractions = totalLikes + totalComments + totalShares;
+    const overallEngagementRate = totalReach > 0 ? ((totalInteractions / totalReach) * 100).toFixed(2) + '%' : '0.00%';
 
     res.json({
       success: true,
       userEmail,
-      totals: {
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalPosts: posts.length,
         totalLikes,
         totalComments,
         totalShares,
         totalDislikes,
         totalReach,
         totalViews,
-        totalEngagements,
-        engagementRate,
-        totalPosts: posts.length
-      },
-      platforms: platformBreakdown,
-      channels
+        totalInteractions,
+        overallEngagementRate,
+        platformBreakdown,
+        channels
+      }
     });
   } catch (error) {
-    console.error('[Conjugate Summary Error]:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate summary.' });
+    console.error('[Conjugate Feed Summary Error]:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch feed summary.' });
   }
 });
 

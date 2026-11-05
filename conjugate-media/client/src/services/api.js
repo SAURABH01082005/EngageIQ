@@ -113,6 +113,59 @@ export const api = {
       body: JSON.stringify({ email: userEmail, ...extraData })
     });
     return handleResponse(res);
+  },
+
+  // ==========================================
+  // TRENDING DATASET API CONTROLS
+  // ==========================================
+  getTrending: async (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    const res = await fetch(`${BASE_URL}/trending?${params.toString()}`);
+    return handleResponse(res);
+  },
+
+  getTrendingSummary: async () => {
+    const res = await fetch(`${BASE_URL}/trending/summary`);
+    return handleResponse(res);
+  },
+
+  getTrendingItem: async (id) => {
+    const res = await fetch(`${BASE_URL}/trending/${encodeURIComponent(id)}`);
+    return handleResponse(res);
+  },
+
+  createTrendingItem: async (itemData) => {
+    const res = await fetch(`${BASE_URL}/trending`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData)
+    });
+    return handleResponse(res);
+  },
+
+  updateTrendingMetrics: async (id, updates) => {
+    const res = await fetch(`${BASE_URL}/trending/${encodeURIComponent(id)}/metrics`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    return handleResponse(res);
+  },
+
+  updateTrendingItem: async (id, formUpdates) => {
+    const res = await fetch(`${BASE_URL}/trending/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formUpdates)
+    });
+    return handleResponse(res);
+  },
+
+  deleteTrendingItem: async (id) => {
+    const res = await fetch(`${BASE_URL}/trending/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    return handleResponse(res);
   }
 };
 

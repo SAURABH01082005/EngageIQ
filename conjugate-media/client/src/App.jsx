@@ -6,6 +6,7 @@ import AuthModal from './components/AuthModal';
 import ChannelProfile from './components/ChannelProfile';
 import PostCreator from './components/PostCreator';
 import PostCard from './components/PostCard';
+import TrendingRadar from './components/TrendingRadar';
 import api from './services/api';
 import './styles/App.css';
 
@@ -19,6 +20,9 @@ export default function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
+
+  // Active view: 'trending' (Live Trending Radar) or 'feed' (Personal Creator Studio)
+  const [activeView, setActiveView] = useState('trending');
 
   const userEmail = currentUser?.email || 'default_user';
 
@@ -35,8 +39,10 @@ export default function App() {
 
   // Fetch data with silent background refresh
   useEffect(() => {
-    loadData(posts.length > 0);
-  }, [userEmail, selectedPlatform, selectedCategory, searchQuery]);
+    if (activeView === 'feed') {
+      loadData(posts.length > 0);
+    }
+  }, [userEmail, selectedPlatform, selectedCategory, searchQuery, activeView]);
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -61,12 +67,11 @@ export default function App() {
 
   const showNotification = (msg) => {
     setNotice(msg);
-    setTimeout(() => setNotice(''), 3000);
+    setTimeout(() => setNotice(''), 3500);
   };
 
   // Instant Real-Time Subscriber Modulation
   const handleModulateSubscribers = async (plat, delta) => {
-    // 1. Instant optimistic state update
     setChannels((prev) => {
       const current = prev[plat] || { subscribers: 25000, platform: plat };
       const nextSubs = Math.max(0, Number(current.subscribers || 0) + Number(delta));
@@ -82,7 +87,6 @@ export default function App() {
 
     showNotification(`⚡ ${plat.toUpperCase()} subscribers updated (${delta > 0 ? `+${delta}` : delta})!`);
 
-    // 2. Background server sync
     try {
       const res = await api.updateSubscribers(plat, delta, null, userEmail);
       if (res.channel) {
@@ -90,7 +94,6 @@ export default function App() {
       }
     } catch (err) {
       console.error('Background sync failed:', err);
-      // Revert if error
       loadData(true);
     }
   };
@@ -114,7 +117,6 @@ export default function App() {
 
   // Instant Real-Time Metric Modulation (+likes, +comments, +shares, -dislikes)
   const handleModulateMetrics = async (postId, updates) => {
-    // 1. Instant optimistic state update
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
@@ -125,7 +127,6 @@ export default function App() {
         if (updates.dislikesDelta !== undefined) m.dislikes = Math.max(0, (m.dislikes || 0) + Number(updates.dislikesDelta));
         if (updates.reachDelta !== undefined) m.reach = Math.max(0, (m.reach || 0) + Number(updates.reachDelta));
 
-        // Real-time client score calculation
         const raw = ((m.likes || 0) * 1) + ((m.comments || 0) * 2.5) + ((m.shares || 0) * 3.5) - ((m.dislikes || 0) * 2);
         const reach = m.reach || 1000;
         const rate = reach > 0 ? (raw / reach) * 100 : 5;
@@ -135,7 +136,6 @@ export default function App() {
       })
     );
 
-    // 2. Background server sync
     try {
       const res = await api.updatePostMetrics(postId, updates, userEmail);
       if (res.post) {
@@ -147,7 +147,7 @@ export default function App() {
     }
   };
 
-  // Instant Real-Time Comment Addition
+  // Comment Addition
   const handleAddComment = async (postId, commentData) => {
     const tempComment = {
       id: `temp_${Date.now()}`,
@@ -157,7 +157,6 @@ export default function App() {
       timestamp: new Date().toISOString()
     };
 
-    // 1. Instant optimistic update
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
@@ -170,7 +169,6 @@ export default function App() {
       })
     );
 
-    // 2. Background server sync
     try {
       const res = await api.addComment(postId, commentData, userEmail);
       if (res.post) {
@@ -183,7 +181,7 @@ export default function App() {
     }
   };
 
-  // Instant Real-Time Post Deletion
+  // Delete Post
   const handleDeletePost = async (postId) => {
     if (!window.confirm('Delete this post from your feed?')) return;
     setPosts((prev) => prev.filter((p) => p.id !== postId));
@@ -214,6 +212,8 @@ export default function App() {
       <Navbar
         selectedPlatform={selectedPlatform}
         onSelectPlatform={setSelectedPlatform}
+        activeView={activeView}
+        onSelectView={setActiveView}
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
@@ -226,21 +226,35 @@ export default function App() {
             <span className="cm-live-dot" />
             <div>
               <div className="cm-sync-title">
-                Conjugate Media Server Active (Port 5002) • Firebase Store: <code>users/{userEmail}</code>
+                Conjugate Media Server Active (Port 5002) • Scraper Dataset Mode: <code>data/useData.js</code>
               </div>
               <div className="cm-sync-sub">
-                Modulate any post's likes, comments, or channel subscribers below to test EngageIQ real-time predictions.
+                Switch between <strong>🔥 Live Trending Radar</strong> (to view, boost, or add platform trending videos) and <strong>📱 Creator Studio</strong>.
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            className="cm-btn-reset"
-            onClick={handleResetSandbox}
-            title="Reset sandbox to starter seed"
-          >
-            Reset Seed ↺
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              className={`cm-btn-reset ${activeView === 'trending' ? 'active-view-btn' : ''}`}
+              style={{
+                background: activeView === 'trending' ? '#f59e0b' : 'rgba(255, 255, 255, 0.08)',
+                color: activeView === 'trending' ? '#0f172a' : '#f8fafc',
+                fontWeight: 700
+              }}
+              onClick={() => setActiveView(activeView === 'trending' ? 'feed' : 'trending')}
+            >
+              {activeView === 'trending' ? 'Switch to Creator Studio 📱' : 'Switch to Trending Radar 🔥'}
+            </button>
+            <button
+              type="button"
+              className="cm-btn-reset"
+              onClick={handleResetSandbox}
+              title="Reset sandbox to starter seed"
+            >
+              Reset Seed ↺
+            </button>
+          </div>
         </div>
 
         {notice && (
@@ -251,95 +265,107 @@ export default function App() {
             padding: '0.65rem 1rem',
             borderRadius: '0.5rem',
             fontSize: '0.85rem',
-            fontWeight: 600
+            fontWeight: 600,
+            animation: 'fadeIn 0.2s ease'
           }}>
             {notice}
           </div>
         )}
 
-        {/* Channel Profile Banner with Subscriber Boosters */}
-        <ChannelProfile
-          platform={selectedPlatform}
-          channelData={channels}
-          onModulateSubscribers={handleModulateSubscribers}
-        />
+        {/* VIEW 1: TRENDING RADAR & DATASET CONTROL STUDIO */}
+        {activeView === 'trending' ? (
+          <TrendingRadar
+            initialPlatform={selectedPlatform}
+            onShowNotification={showNotification}
+          />
+        ) : (
+          /* VIEW 2: PERSONAL CREATOR FEED & STUDIO */
+          <>
+            {/* Channel Profile Banner with Subscriber Boosters */}
+            <ChannelProfile
+              platform={selectedPlatform}
+              channelData={channels}
+              onModulateSubscribers={handleModulateSubscribers}
+            />
 
-        {/* Post Publisher Studio */}
-        <PostCreator
-          defaultPlatform={selectedPlatform}
-          onCreatePost={handleCreatePost}
-        />
+            {/* Post Publisher Studio */}
+            <PostCreator
+              defaultPlatform={selectedPlatform}
+              onCreatePost={handleCreatePost}
+            />
 
-        {/* Feed Section */}
-        <section className="cm-feed-section">
-          <div className="cm-feed-header">
-            <div className="cm-feed-title">
-              <h3>
-                {selectedPlatform === 'all' ? 'All Platform Feeds' : `${selectedPlatform.toUpperCase()} Feed`}
-              </h3>
-              <span className="cm-count-tag">{posts.length} Posts</span>
-            </div>
+            {/* Feed Section */}
+            <section className="cm-feed-section">
+              <div className="cm-feed-header">
+                <div className="cm-feed-title">
+                  <h3>
+                    {selectedPlatform === 'all' ? 'All Platform Feeds' : `${selectedPlatform.toUpperCase()} Feed`}
+                  </h3>
+                  <span className="cm-count-tag">{posts.length} Posts</span>
+                </div>
 
-            <div className="cm-feed-filters">
-              {/* Category Filter */}
-              <select
-                className="cm-input"
-                style={{ width: 'auto', padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="all">All Categories</option>
-                <option value="AI & Tech">AI & Tech</option>
-                <option value="Marketing & Growth">Marketing & Growth</option>
-                <option value="Business & Leadership">Business & Leadership</option>
-                <option value="Creator Economy">Creator Economy</option>
-                <option value="Product Launch">Product Launch</option>
-                <option value="Education">Education</option>
-              </select>
+                <div className="cm-feed-filters">
+                  {/* Category Filter */}
+                  <select
+                    className="cm-input"
+                    style={{ width: 'auto', padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="AI & Tech">AI & Tech</option>
+                    <option value="Marketing & Growth">Marketing & Growth</option>
+                    <option value="Business & Leadership">Business & Leadership</option>
+                    <option value="Creator Economy">Creator Economy</option>
+                    <option value="Product Launch">Product Launch</option>
+                    <option value="Education">Education</option>
+                  </select>
 
-              {/* Search Bar */}
-              <input
-                type="text"
-                className="cm-input"
-                style={{ width: '200px', padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
-                placeholder="Search captions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+                  {/* Search Bar */}
+                  <input
+                    type="text"
+                    className="cm-input"
+                    style={{ width: '200px', padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
+                    placeholder="Search captions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-              Loading live social feeds...
-            </div>
-          ) : posts.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '3rem',
-              background: 'rgba(15, 23, 42, 0.6)',
-              borderRadius: '1rem',
-              border: '1px solid rgba(255, 255, 255, 0.08)'
-            }}>
-              <h4>No posts found for this filter</h4>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                Use the post creator above to publish a new post on {selectedPlatform.toUpperCase()}!
-              </p>
-            </div>
-          ) : (
-            <div className="cm-feed-grid" style={{ marginTop: '1rem' }}>
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onModulateMetrics={handleModulateMetrics}
-                  onAddComment={handleAddComment}
-                  onDeletePost={handleDeletePost}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                  Loading live social feeds...
+                </div>
+              ) : posts.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '3rem',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  borderRadius: '1rem',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <h4>No posts found for this filter</h4>
+                  <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                    Use the post creator above to publish a new post on {selectedPlatform.toUpperCase()}!
+                  </p>
+                </div>
+              ) : (
+                <div className="cm-feed-grid" style={{ marginTop: '1rem' }}>
+                  {posts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onModulateMetrics={handleModulateMetrics}
+                      onAddComment={handleAddComment}
+                      onDeletePost={handleDeletePost}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
 
       {/* Login / Register Modal */}

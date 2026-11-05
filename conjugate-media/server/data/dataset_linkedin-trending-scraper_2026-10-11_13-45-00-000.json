@@ -1,0 +1,370 @@
+[
+  {
+    "id": "linkedin_trend_1793851503738",
+    "type": "post",
+    "title": "Agentic Workflows are the New Microservices: Production Architecture",
+    "content": "Agentic Workflows are the New Microservices: Production Architecture\n\nWhy asynchronous agent queues outperform synchronous REST pipelines for high-cardinality tasks.",
+    "linkedinUrl": "https://www.linkedin.com/posts/linkedin_trend_1793851503738",
+    "category": "AI & Tech",
+    "tags": [
+      "AIArchitecture",
+      "AgenticAI",
+      "Engineering"
+    ],
+    "duration": "02:15",
+    "author": {
+      "id": "li_auth_1793851503738",
+      "name": "DeepMind Fellow",
+      "publicIdentifier": "deepmind_fellow",
+      "info": "Creator & Thought Leader",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793851503738,
+      "date": "2026-11-05T04:05:03.738Z"
+    },
+    "postVideo": {
+      "videoUrl": "",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 31000,
+      "comments": 2900,
+      "shares": 4200,
+      "views": 450000,
+      "impressions": 562500
+    }
+  },
+  {
+    "id": "li_trend_8492019482",
+    "title": "Autonomous Agents Have Crossed the Production Threshold: 5 Lessons from Scaling to 10M Users",
+    "content": "Last year, agentic workflows were primarily proofs-of-concept. Today, our fleet of autonomous multi-agent workers executes 4.2 million asynchronous tasks every 24 hours.\n\nHere are 5 counter-intuitive engineering architectural takeaways:\n1. Deterministic state machines beat open-ended loops every time.\n2. Small, specialized fine-tuned models outperform giant general LLMs by 3.4x in latency and 80% lower cost.\n3. Human-in-the-loop validation is not a bottleneck; it is your training flywheel.\n4. Observability and trace graphs are the new compiler debugging.\n5. Prompt engineering has morphed into distributed systems engineering.\n\nAre you running autonomous agents in production yet, or still prototyping?\n\n#ArtificialIntelligence #MachineLearning #SystemArchitecture #TechLeadership #SoftwareEngineering",
+    "linkedinUrl": "https://www.linkedin.com/posts/satyanadella_ai-agents-systems-production-activity-8492019482",
+    "category": "AI & Tech",
+    "tags": [
+      "ArtificialIntelligence",
+      "MachineLearning",
+      "SystemArchitecture",
+      "TechLeadership",
+      "SoftwareEngineering"
+    ],
+    "duration": "03:15",
+    "author": {
+      "id": "satyanadella_exec",
+      "name": "Satya Nadella",
+      "publicIdentifier": "satyanadella",
+      "info": "Chairman and CEO at Microsoft",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793828642524,
+      "date": "2026-11-04T21:44:02.524Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/satyanadella_ai-agents-systems-production-activity-8492019482",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 64200,
+      "comments": 4890,
+      "shares": 6150,
+      "views": 1840000,
+      "impressions": 2150000
+    }
+  },
+  {
+    "id": "li_trend_8492019483",
+    "title": "Why 2026 is the Year of the Solo Billion-Dollar Enterprise",
+    "content": "Sam Altman predicted a single founder with AI agents will build a $1B valuation company. We just interviewed 12 solo founders generating over $8M ARR with zero full-time staff.\n\nThe modern solopreneur tech stack:\n• Claude 3.7 / Gemini 2.0 for strategic product code\n• Autonomous agents for customer support triage\n• Supabase & Stripe for headless monetization\n• Algorithmic content funnels across LinkedIn & X\n\nEfficiency is the new scale.\n\n#Entrepreneurship #Solopreneur #VentureCapital #Startups #FutureOfWork",
+    "linkedinUrl": "https://www.linkedin.com/posts/alliekmiller_solo-founders-unicorn-ai-activity-8492019483",
+    "category": "Business & Leadership",
+    "tags": [
+      "Entrepreneurship",
+      "Solopreneur",
+      "VentureCapital",
+      "Startups",
+      "FutureOfWork"
+    ],
+    "duration": "02:40",
+    "author": {
+      "id": "alliekmiller_ai",
+      "name": "Allie K. Miller",
+      "publicIdentifier": "alliekmiller",
+      "info": "Top AI Voice | Fortune 500 AI Advisor | Ex-Amazon Head of Machine Learning",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793799842530,
+      "date": "2026-11-04T13:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/alliekmiller_solo-founders-unicorn-ai-activity-8492019483",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 41800,
+      "comments": 3240,
+      "shares": 4890,
+      "views": 1260000,
+      "impressions": 1520000
+    }
+  },
+  {
+    "id": "li_trend_8492019484",
+    "title": "Building Deep Learning Systems from Scratch: 10 Core Fundamentals Every Engineer Must Master",
+    "content": "If you only understand AI through API calls, you are vulnerable to model commoditization.\n\nTo build durable engineering leverage, dive into:\n1. Tensor operations and CUDA memory coalescing\n2. Backpropagation with automatic differentiation\n3. FlashAttention-3 implementation internals\n4. Quantization (FP8, INT4 AWQ) and KV-cache compression\n5. Multi-GPU gradient accumulation and Pipeline Parallelism\n\nCode first, buzzwords second.\n\n#DeepLearning #ComputerScience #CUDA #MachineLearning #SoftwareEngineering",
+    "linkedinUrl": "https://www.linkedin.com/posts/andrej-karpathy_deep-learning-cuda-internals-activity-8492019484",
+    "category": "AI & Tech",
+    "tags": [
+      "DeepLearning",
+      "ComputerScience",
+      "CUDA",
+      "MachineLearning",
+      "SoftwareEngineering"
+    ],
+    "duration": "04:50",
+    "author": {
+      "id": "andrej_karpathy_scientist",
+      "name": "Andrej Karpathy",
+      "publicIdentifier": "andrejkarpathy",
+      "info": "Building Eureka Labs | Ex-Director of AI at Tesla | OpenAI Founding Member",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793771042530,
+      "date": "2026-11-04T05:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/andrej-karpathy_deep-learning-cuda-internals-activity-8492019484",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 82500,
+      "comments": 6410,
+      "shares": 9800,
+      "views": 2450000,
+      "impressions": 2950000
+    }
+  },
+  {
+    "id": "li_trend_8492019485",
+    "title": "The Death of 200-Slide Pitch Decks: How Modern Tech Founders Close Series A in 7 Days",
+    "content": "Venture capital in 2026 has completely bifurcated.\n\nVague visions with inflated valuations are getting rejected in 5 minutes. What investors want to see:\n→ Verifiable ARR momentum and net negative churn\n→ Working interactive prototypes with real agent logs\n→ Unit economics proving sub-$0.02 inference cost per unit of work\n→ High-velocity engineering squads shipping daily\n\nShow the telemetry, not the stock photos.\n\n#VentureCapital #Startups #Fundraising #ProductGrowth #Founders",
+    "linkedinUrl": "https://www.linkedin.com/posts/lennyrachitsky_venture-capital-series-a-speed-activity-8492019485",
+    "category": "Creator Economy",
+    "tags": [
+      "VentureCapital",
+      "Startups",
+      "Fundraising",
+      "ProductGrowth",
+      "Founders"
+    ],
+    "duration": "01:55",
+    "author": {
+      "id": "lenny_rachitsky_newsletter",
+      "name": "Lenny Rachitsky",
+      "publicIdentifier": "lennyrachitsky",
+      "info": "Author of Lenny's Newsletter & Podcast | Ex-Airbnb Growth Lead",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793735042530,
+      "date": "2026-11-03T19:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/lennyrachitsky_venture-capital-series-a-speed-activity-8492019485",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 38900,
+      "comments": 2910,
+      "shares": 3450,
+      "views": 980000,
+      "impressions": 1180000
+    }
+  },
+  {
+    "id": "li_trend_8492019486",
+    "title": "Accelerated Computing Is Not a Trend: It Is the Foundation of Next-Gen Industrial Intelligence",
+    "content": "We are at the beginning of a trillion-dollar data center transformation.\n\nGeneral purpose CPU computing is reaching thermal and physical limits. Accelerated computing with domain-specific AI factories is now generating intelligence as an industrial utility.\n\nFrom drug discovery simulations to digital twins of gigafactories, every physical industry is becoming a software-defined computing problem.\n\n#NVIDIA #AcceleratedComputing #IndustrialAI #Semiconductors #FutureOfTech",
+    "linkedinUrl": "https://www.linkedin.com/posts/jensenhuang_nvidia-accelerated-computing-industrial-activity-8492019486",
+    "category": "AI & Tech",
+    "tags": [
+      "NVIDIA",
+      "AcceleratedComputing",
+      "IndustrialAI",
+      "Semiconductors",
+      "FutureOfTech"
+    ],
+    "duration": "05:10",
+    "author": {
+      "id": "jensen_huang_nvidia",
+      "name": "Jensen Huang",
+      "publicIdentifier": "jensenhuang",
+      "info": "Founder and CEO, NVIDIA",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793706242530,
+      "date": "2026-11-03T11:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/jensenhuang_nvidia-accelerated-computing-industrial-activity-8492019486",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 95400,
+      "comments": 7800,
+      "shares": 11200,
+      "views": 3100000,
+      "impressions": 3750000
+    }
+  },
+  {
+    "id": "li_trend_8492019487",
+    "title": "Don't Manage People, Architect High-Context Environments",
+    "content": "Traditional micro-management assumes people don't know what to do.\n\nModern executive leadership assumes top performers lack high-fidelity context.\n\nWhen every engineer has total visibility into:\n• Customer pain metrics\n• Real-time server cost burns\n• Churn post-mortems\n• Competitive intelligence\n\nThey don't need permission to solve the right problems.\n\n#Leadership #Management #Culture #HighPerformance #TechExecutive",
+    "linkedinUrl": "https://www.linkedin.com/posts/andrew-ng_leadership-context-architecture-activity-8492019487",
+    "category": "Business & Leadership",
+    "tags": [
+      "Leadership",
+      "Management",
+      "Culture",
+      "HighPerformance",
+      "TechExecutive"
+    ],
+    "duration": "02:10",
+    "author": {
+      "id": "andrew_ng_deeplearning",
+      "name": "Andrew Ng",
+      "publicIdentifier": "andrewng",
+      "info": "Founder of DeepLearning.AI | Managing General Partner at AI Fund | Stanford Adjunct Professor",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793684642530,
+      "date": "2026-11-03T05:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/andrew-ng_leadership-context-architecture-activity-8492019487",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 54100,
+      "comments": 3820,
+      "shares": 6200,
+      "views": 1680000,
+      "impressions": 1980000
+    }
+  },
+  {
+    "id": "li_trend_8492019488",
+    "title": "Prompting is Dead, Context Engineering is King",
+    "content": "If you are tweaking 50 adjectives in your prompt to get reliable JSON output, stop.\n\nContext engineering consists of:\n1. Dynamic in-context few-shot selection via vector cosine distance\n2. Deterministic JSON schema validation with Pydantic & Zod\n3. Recursive self-correction loops when grammar fails\n4. State caching across turns to minimize token expenditure\n\nPrompt engineering was 2023. Systems engineering is 2026.\n\n#SoftwareDevelopment #LLMOps #AIArchitecture #EngineeringLeadership #DevOps",
+    "linkedinUrl": "https://www.linkedin.com/posts/cassiekozyrkov_context-engineering-llms-activity-8492019488",
+    "category": "AI & Tech",
+    "tags": [
+      "SoftwareDevelopment",
+      "LLMOps",
+      "AIArchitecture",
+      "EngineeringLeadership",
+      "DevOps"
+    ],
+    "duration": "02:35",
+    "author": {
+      "id": "cassie_kozyrkov_decision",
+      "name": "Cassie Kozyrkov",
+      "publicIdentifier": "kozyrkov",
+      "info": "CEO Data Science Executive | Former Chief Decision Scientist, Google",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793655842530,
+      "date": "2026-11-02T21:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/cassiekozyrkov_context-engineering-llms-activity-8492019488",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 47200,
+      "comments": 3510,
+      "shares": 5120,
+      "views": 1420000,
+      "impressions": 1710000
+    }
+  },
+  {
+    "id": "li_trend_8492019489",
+    "title": "Why We Switched 100% of Our Cloud Microservices to Rust: 12-Month Telemetry Report",
+    "content": "One year ago, our cloud AWS bill was $142,000/month across 85 Node and Python containers.\n\nWe ported the top 4 ingestion services to Rust.\n\nThe real production numbers:\n• CPU utilization dropped by 74%\n• Memory footprint reduced from 1.8GB per instance to 34MB\n• p99 response times dropped from 240ms to 8.2ms\n• Monthly infrastructure bill reduced to $38,000\n\nThe compiler fight during week 1 is worth the 10x leverage in year 1.\n\n#RustLang #CloudArchitecture #Microservices #PerformanceEngineering #DevOps",
+    "linkedinUrl": "https://www.linkedin.com/posts/paulgraham_rust-microservices-infrastructure-activity-8492019489",
+    "category": "AI & Tech",
+    "tags": [
+      "RustLang",
+      "CloudArchitecture",
+      "Microservices",
+      "PerformanceEngineering",
+      "DevOps"
+    ],
+    "duration": "03:40",
+    "author": {
+      "id": "paul_graham_yc",
+      "name": "Paul Graham",
+      "publicIdentifier": "paulgraham",
+      "info": "Co-founder, Y Combinator | Writer & Technologist",
+      "avatar": {
+        "url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=60"
+      },
+      "verified": true
+    },
+    "postedAt": {
+      "timestamp": 1793627042530,
+      "date": "2026-11-02T13:44:02.530Z"
+    },
+    "postVideo": {
+      "videoUrl": "https://www.linkedin.com/posts/paulgraham_rust-microservices-infrastructure-activity-8492019489",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=60"
+    },
+    "thumbnail_url": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=60",
+    "engagement": {
+      "likes": 71300,
+      "comments": 5920,
+      "shares": 8400,
+      "views": 2180000,
+      "impressions": 2640000
+    }
+  }
+]
