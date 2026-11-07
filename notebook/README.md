@@ -1,368 +1,293 @@
-# Conjugate Media — ML Data & Training Notebooks
+# EngageIQ — Engagement Intelligence Engine
 
-This folder documents two Jupyter notebooks that prepare data and train **Model A** (trending) and **Model B** (audience + engagement) on the Conjugate Media social datasets.
+**EngageIQ** is a Jupyter notebook that scores any social post using the trained **Model A** (trending) and **Model B** (audience) from Conjugate Media, then suggests how to raise engagement.
 
-| Notebook | Purpose |
-|----------|---------|
-| [`build_ml_ready_datasets.ipynb`](./build_ml_ready_datasets.ipynb) | Turn **raw JSON** scrapes into clean ML-ready CSVs |
-| [`conjugate-media-model-A-B-training.ipynb`](./conjugate-media-model-A-B-training.ipynb) | Train **Model A** + **Model B** and predict engagement |
-
-There is also a pure-Python equivalent of the data builder:
-
-- [`build_ml_ready_datasets.py`](./build_ml_ready_datasets.py) — same logic as the first notebook, runnable from the terminal
+| File | Role |
+|------|------|
+| [`EngageIQ.ipynb`](./EngageIQ.ipynb) | Interactive scorer: text in → A score, B score, final score, tips |
 
 ---
 
 ## Table of contents
 
-1. [Overview of the two models](#1-overview-of-the-two-models)
+1. [What EngageIQ does](#1-what-engageiq-does)
 2. [Prerequisites](#2-prerequisites)
-3. [Project data layout](#3-project-data-layout)
-4. [Notebook 1 — Build ML-ready datasets](#4-notebook-1--build-ml-ready-datasets)
-5. [Notebook 2 — Train Model A & Model B](#5-notebook-2--train-model-a--model-b)
-6. [Engineered features (formulas)](#6-engineered-features-formulas)
-7. [Outputs & saved models](#7-outputs--saved-models)
-8. [How to run (quick start)](#8-how-to-run-quick-start)
-9. [Using the trained models in code](#9-using-the-trained-models-in-code)
-10. [Troubleshooting](#10-troubleshooting)
+3. [Models it loads](#3-models-it-loads)
+4. [How scoring works](#4-how-scoring-works)
+5. [How to run](#5-how-to-run)
+6. [User inputs](#6-user-inputs)
+7. [Outputs explained](#7-outputs-explained)
+8. [Suggestion engine](#8-suggestion-engine)
+9. [Batch scoring](#9-batch-scoring)
+10. [Pipeline position](#10-pipeline-position)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
-## 1. Overview of the two models
+## 1. What EngageIQ does
 
-### Model A — What is trending?
+You paste a **post title / caption** (and optional settings). EngageIQ returns:
 
-- **Goal:** Score whether a post/video is likely to trend.
-- **Inputs:** `title`, `description`, `category`, `tags` (text) + content meta  
-  (`platform`, `content_type`, `duration_sec`, `is_short_form`, `is_vertical_reel`, posting time, …).
-- **Targets:**
-  - Regression: `engagement_score` (0–100)
-  - Classification: High vs Low engagement
-- **Data source:** Trending scraper JSON only (`model_A_trending.csv`).
+| Output | Meaning |
+|--------|---------|
+| **Model A score** (0–100) | Trending potential from text + format |
+| **Model A label** | `HIGH trending` or `low/mid trending` |
+| **Model B score** (0–100) | Expected engagement for your **audience type** |
+| **Final EngageIQ score** (0–100) | Weighted blend of A and B |
+| **Final label** | Excellent / Good / Average / Low |
+| **Suggestions** | Actionable tips to improve the post |
 
-### Model B — Audience type + engagement prediction
+Default blend:
 
-- **Goal:**
-  1. Infer **audience type** from the creator’s own posts (no trending data).
-  2. Predict **engagement_score** for a new post **given that audience type**.
-- **Inputs:** platform, content type, duration, timing, subscribers, breakout/virality signals, and **`audience_type`**.
-- **Targets:** `engagement_score` + cluster labels such as:
-  - Viral Breakout  
-  - Loyal High-Reaction  
-  - Short-Form / Reel Audience  
-  - Steady / Broad Reach  
-- **Data source:** User posts only (`model_B_audience_posts.csv`).
+```text
+Final = 0.45 × Model A  +  0.55 × Model B
+```
+
+Weights are configurable in the notebook (`WEIGHT_A`, `WEIGHT_B`).
 
 ---
 
 ## 2. Prerequisites
 
-### Software
+### Required
 
 - Python 3.9+
-- Jupyter / VS Code / Colab (to open `.ipynb`)
-
-### Python packages
+- Packages:
 
 ```bash
-pip install pandas numpy matplotlib seaborn scikit-learn joblib
+pip install pandas numpy matplotlib scikit-learn joblib
 ```
 
-Optional (already used if present):
+### Required model files
 
-```bash
-pip install jupyter
-```
-
-### Data
-
-Unzip the Conjugate Media project so that this path exists:
-
-```text
-conjugate-media/server/data/
-  dataset_youtube-trending-scraper_*.json
-  dataset_instagram-trending-scraper_*.json
-  dataset_facebook-trending-scraper_*.json
-  dataset_linkedin-trending-scraper_*.json
-  dataset_twitter-trends_*.json
-  dataset_facebook-posts-scraper_*.json
-  dataset_linkedin-profile-posts_*.json
-  dataset_twitter-user-tweets_*.json
-  default_seed.json
-  live_store.json
-  ...
-```
-
-You do **not** need to re-scrape anything. Both notebooks read these files only.
-
----
-
-## 3. Project data layout
-
-```text
-conjugate-media/
-  server/
-    data/
-      *.json                          ← raw scrapes (input)
-      ml_ready/                       ← created by build notebook
-        model_A_trending.csv
-        model_B_audience_posts.csv
-        model_B_audience_{platform}.csv
-        FEATURE_DICTIONARY.md
-    ml_models/                        ← created by training notebook
-      model_A_trending_gb.joblib
-      model_A_trending_clf.joblib
-      model_B_audience_rf.joblib
-      model_B_audience_engagement.joblib
-      model_B_audience_clusters.joblib
-```
-
----
-
-## 4. Notebook 1 — Build ML-ready datasets
-
-**File:** `build_ml_ready_datasets.ipynb`
-
-### What it does (step by step)
-
-| Section | Description |
-|---------|-------------|
-| 1. Setup | Locate `server/data`, create `ml_ready/` |
-| 2. Helpers | Safe numbers, duration parse, time parse, content type, tags |
-| 2.4 Metrics | Compute `breakout_log_ratio`, `quality_reaction_rate`, `virality_index`, `engagement_score` |
-| 3. Subscribers | Load follower counts from `default_seed` / `live_store` (for Model B) |
-| 4. Model A | Build one row per trending item (YouTube, Instagram, Facebook, LinkedIn, Twitter trends) |
-| 5. Model B | Build rows from seed posts + Facebook / LinkedIn / Twitter profile posts only |
-| 6. Save | Write CSVs + per-platform splits |
-| 7. Peek | Sanity-check sample rows and stats |
-
-### How to run
-
-1. Open `build_ml_ready_datasets.ipynb`
-2. **Run All**
-3. Confirm files under `conjugate-media/server/data/ml_ready/`
-
-Or from the terminal:
-
-```bash
-python build_ml_ready_datasets.py
-```
-
-### Expected row counts (approx.)
-
-| File | Rows |
-|------|------|
-| `model_A_trending.csv` | ~153 |
-| `model_B_audience_posts.csv` | ~1,381 |
-| `model_B_audience_youtube.csv` | ~100 |
-| `model_B_audience_instagram.csv` | ~12 |
-| `model_B_audience_facebook.csv` | ~200 |
-| `model_B_audience_linkedin.csv` | ~276 |
-| `model_B_audience_twitter.csv` | ~793 |
-
----
-
-## 5. Notebook 2 — Train Model A & Model B
-
-**File:** `conjugate-media-model-A-B-training.ipynb`
-
-**Depends on:** CSVs from Notebook 1 (`ml_ready/`).
-
-### What it does
-
-#### Model A (trending)
-
-1. Load `model_A_trending.csv`
-2. Build TF-IDF on `title + description + category + tags`
-3. Add meta features (platform, content type, duration, short-form, reel, time)
-4. Train regression models (Ridge, Random Forest, Gradient Boosting) → `engagement_score`
-5. Train classifier → High vs Low engagement
-6. Demo: score a new title/description with `predict_trending_score(...)`
-
-#### Model B (audience)
-
-1. Load `model_B_audience_posts.csv`
-2. Train engagement regressor on meta + breakout/virality features
-3. **Cluster** posts → `audience_type` (Viral Breakout, Loyal, Steady, …)
-4. **Audience-aware engagement model** — predicts `engagement_score` **using `audience_type` as a feature**
-5. Demo: `predict_engagement_for_audience(platform, content_type, audience_type, ...)`
-6. Per-platform mini models + feature importance charts
-7. Save all models under `server/ml_models/`
-
-### How to run
-
-1. Make sure Notebook 1 has been run (CSVs exist)
-2. Open `conjugate-media-model-A-B-training.ipynb`
-3. **Run All**
-4. Scroll to **B7** to try engagement prediction for different audience types
-
-### Typical metrics (will vary slightly by run)
-
-| Model | Metric | Approx. value |
-|-------|--------|----------------|
-| A — Gradient Boosting / RF | R² (engagement_score) | ~0.8–0.87 |
-| A — High/Low classifier | Accuracy / F1 | ~0.85–0.87 |
-| B — RF (meta only) | R² | ~0.9+ |
-| B — Audience-aware RF | R² | ~0.97 |
-| B — Per-platform | R² | YouTube/Facebook often > 0.95 |
-
----
-
-## 6. Engineered features (formulas)
-
-These columns are created in the **build** notebook and used as targets or features in training.
-
-| Column | Formula / meaning |
-|--------|-------------------|
-| `breakout_log_ratio` | \(\ln\frac{\text{views}+1}{\text{subscribers}+1}\) |
-| `quality_reaction_rate` | \(\frac{\text{likes}+\text{comments}+\text{all reactions}}{\text{views}}\) |
-| `virality_index` | \(\text{views} + 15\times\text{likes} + 50\times\text{comments} + 100\times\text{shares}\) |
-| `engagement_rate` | \(100 \times \frac{\text{likes}+\text{comments}+\text{shares}}{\text{views}}\) |
-| `engagement_score` | Composite **0–100** score (blend of ER, QRR, log-virality, breakout) — main ML target |
-| `content_type` | `video` / `image` / `text` / `reel` / `short` / … |
-| `duration_sec` | Length in seconds |
-| `is_vertical_reel` | 1 if reel / vertical short style |
-| `is_short_form` | 1 if ≤60s or reel/short |
-| `post_hour` | Hour of day (0–23, UTC) |
-| `post_dayofweek` | 0 = Monday … 6 = Sunday |
-| `is_weekend` | 1 if Saturday or Sunday |
-| `tags` / `tags_count` | Tag string and count |
-| `subscribers` | Platform follower count (Model B; 0 on pure trending rows) |
-
-Full column notes: `conjugate-media/server/data/ml_ready/FEATURE_DICTIONARY.md`
-
----
-
-## 7. Outputs & saved models
-
-### After Notebook 1
-
-```text
-conjugate-media/server/data/ml_ready/
-  model_A_trending.csv
-  model_B_audience_posts.csv
-  model_B_audience_youtube.csv
-  model_B_audience_instagram.csv
-  model_B_audience_facebook.csv
-  model_B_audience_linkedin.csv
-  model_B_audience_twitter.csv
-  FEATURE_DICTIONARY.md
-```
-
-### After Notebook 2
+EngageIQ does **not** train models. It loads them from:
 
 ```text
 conjugate-media/server/ml_models/
-  model_A_trending_gb.joblib          # A regression (engagement_score)
-  model_A_trending_clf.joblib         # A High vs Low classifier
-  model_B_audience_rf.joblib          # B engagement (meta features)
-  model_B_audience_engagement.joblib  # B engagement **with audience_type**
-  model_B_audience_clusters.joblib    # KMeans + scaler + cluster name map
 ```
+
+Those files are produced by:
+
+1. `build_ml_ready_datasets.ipynb` (or `.py`) → CSVs in `ml_ready/`
+2. `conjugate-media-model-A-B-training.ipynb` → `.joblib` models
+
+If `ml_models/` is empty, run the training notebook first.
+
+### Optional
+
+- Jupyter / VS Code / Google Colab to run the `.ipynb` interactively
 
 ---
 
-## 8. How to run (quick start)
+## 3. Models it loads
 
-```bash
-# 1) Ensure project data is present
-ls conjugate-media/server/data/*.json
+| File | Used for |
+|------|----------|
+| `model_A_trending_gb.joblib` | Model A **regressor** → continuous engagement / trending score |
+| `model_A_trending_clf.joblib` | Model A **classifier** → HIGH vs low/mid trending |
+| `model_B_audience_engagement.joblib` | Model B **audience-aware** engagement score |
+| `model_B_audience_rf.joblib` | Model B **meta-only** engagement (fallback / blend) |
+| `model_B_audience_clusters.joblib` | Audience type names + high-score threshold from training |
 
-# 2) Install deps
-pip install pandas numpy matplotlib seaborn scikit-learn joblib jupyter
+### Why A has regressor + classifier
 
-# 3) Build ML-ready CSVs
-#    Option A — notebook
-jupyter notebook build_ml_ready_datasets.ipynb
-#    Option B — script
-python build_ml_ready_datasets.py
+- **Regressor** → “How strong is trending potential?” (number)
+- **Classifier** → “Is it HIGH or not?” (label)
 
-# 4) Train models
-jupyter notebook conjugate-media-model-A-B-training.ipynb
-#    → Run All
-```
+### Why B has two RFs
 
-Order matters: **build datasets first**, then **train**.
+- **Audience-aware RF** → score **given** `audience_type` (Viral Breakout, Steady, …)
+- **Meta RF** → score from platform / format / timing / breakout signals only  
+
+EngageIQ blends them (default ~70% audience-aware + 30% meta) into **Model B score**.
 
 ---
 
-## 9. Using the trained models in code
-
-### Model A — score a new trending idea
-
-```python
-import joblib
-import pandas as pd
-import numpy as np
-
-# The training notebook defines predict_trending_score() after training.
-# After a full Run All, you can call it in a later cell, or reload pipelines:
-
-pipe_A = joblib.load('conjugate-media/server/ml_models/model_A_trending_gb.joblib')
-# Build a one-row DataFrame with the same columns used in training
-# (platform, content_type, duration_sec, text, ...), then:
-# score = pipe_A.predict(row_df)[0]
-```
-
-### Model B — engagement given audience type
-
-```python
-import joblib
-
-pipe_B = joblib.load(
-    'conjugate-media/server/ml_models/model_B_audience_engagement.joblib'
-)
-cluster_bundle = joblib.load(
-    'conjugate-media/server/ml_models/model_B_audience_clusters.joblib'
-)
-# cluster_bundle keys: kmeans, scaler, cluster_features, cluster_names, high_threshold_A
-
-# Prefer using the notebook helper after Run All:
-# predict_engagement_for_audience(
-#     platform='youtube',
-#     content_type='video',
-#     audience_type='Viral Breakout',
-#     duration_sec=180,
-#     subscribers=8_630_000,
-# )
-```
-
-### Typical product flow
+## 4. How scoring works
 
 ```text
-1. History of posts  →  cluster  →  audience_type per platform
-2. New post idea     →  pick platform + content_type + audience_type
-3. Model B           →  engagement_score
-4. Optional Model A  →  “will this trend?” from title/description
+Your post text + options
+        │
+        ▼
+  Feature builder
+  (clean text, content_type, duration, tags,
+   post time, subscribers, breakout, virality priors)
+        │
+        ├──────────────────┬────────────────────┐
+        ▼                  ▼                    ▼
+   Model A              Model B            Model B
+   (GB + CLF)        (audience-aware)      (meta RF)
+        │                  │                    │
+        └────────────┬─────┴────────┬───────────┘
+                     ▼              ▼
+              A score + label    B score (blend)
+                     │              │
+                     └──────┬───────┘
+                            ▼
+                   Final EngageIQ score
+                            │
+                            ▼
+                   Suggestion engine
+```
+
+When real view/like counts are unknown, EngageIQ uses **platform priors** (typical views/likes from training context) only to fill `breakout_log_ratio` and `log_virality` for Model B. You can override with real metrics.
+
+---
+
+## 5. How to run
+
+```bash
+# 1) Confirm models exist
+ls conjugate-media/server/ml_models/*.joblib
+
+# 2) Open the notebook
+jupyter notebook EngageIQ.ipynb
+# or open in VS Code / Colab
+
+# 3) Run All cells
+```
+
+Then go to **section 7 (Your turn)**, edit `MY_TEXT` and options, and re-run that cell.
+
+---
+
+## 6. User inputs
+
+| Variable | Meaning | Examples |
+|----------|---------|----------|
+| `text` | Title / caption / post body (**required**) | Any string |
+| `platform` | Target network | `youtube`, `instagram`, `facebook`, `linkedin`, `twitter` |
+| `content_type` | Format | `video`, `image`, `text`, `reel`, `short`, `carousel` |
+| `audience_type` | Audience segment (Model B) | `Viral Breakout`, `Loyal High-Reaction`, `Short-Form / Reel Audience`, `Steady / Broad Reach` |
+| `duration_sec` | Length in seconds (`0` for text) | `35`, `180`, `0` |
+| `tags` | Extra tags / hashtags | `"trailer action 2026"` |
+| `post_hour` | Hour UTC (0–23) | `9`, `18` |
+| `post_dayofweek` | 0=Mon … 6=Sun | `2` |
+| `subscribers` | Optional channel size | `8630000` |
+| `views` / `likes` / `comments` / `shares` | Optional real metrics | leave `None` to use priors |
+
+Minimal call:
+
+```python
+engageiq_analyze("Your caption here", platform="instagram", content_type="reel", duration_sec=30)
+```
+
+Full helper:
+
+```python
+result = engageiq_analyze(
+    text="...",
+    platform="youtube",
+    content_type="video",
+    audience_type="Viral Breakout",
+    duration_sec=150,
+    tags="trailer action",
+    post_hour=18,
+    post_dayofweek=4,
+)
 ```
 
 ---
 
-## 10. Troubleshooting
+## 7. Outputs explained
+
+Example scorecard:
+
+```text
+Model A (Trending)     :   37.0   [HIGH trending]  P(high)=0.66
+Model B (Audience)     :   69.2   (audience-aware 70.2, meta 66.8)
+FINAL EngageIQ score   :   54.7   →  Good / High potential
+```
+
+| Field | Meaning |
+|-------|---------|
+| `model_A_score` | Trending-oriented engagement score from text + format |
+| `model_A_label` | HIGH vs low/mid (classifier) |
+| `model_A_high_proba` | Probability of HIGH class (if available) |
+| `model_B_score` | Blended audience engagement score |
+| `model_B_audience_score` | Pure audience-aware model output |
+| `model_B_meta_score` | Meta-only model output |
+| `final_engageiq_score` | Weighted final decision score |
+| `final_label` | Excellent (≥60) / Good (≥ high threshold) / Average (≥25) / Low |
+| `suggestions` | List of `{level, message}` tips |
+
+The result is also a Python `dict` for use in your own code or API later.
+
+---
+
+## 8. Suggestion engine
+
+Tips are rule-based on:
+
+- Final / A / B score levels  
+- Caption length and tag count  
+- Platform vs content type mismatch (e.g. text on YouTube)  
+- Short-form vs long-form  
+- Audience type (Viral vs Loyal vs Steady vs Short-Form)  
+- Posting hour / weekend on LinkedIn  
+- Missing call-to-action (comment / share / save / question)
+
+Levels you may see: `Critical`, `Improve`, `Good`, `Trending (A)`, `Audience (B)`, `Format`, `Timing`, `CTA`.
+
+---
+
+## 9. Batch scoring
+
+Section 9 scores a **list of posts** and prints a table:
+
+```text
+preview | platform | type | A | B | Final | label
+```
+
+Useful for comparing several caption variants before publishing.
+
+---
+
+## 10. Pipeline position
+
+```text
+Raw JSON (zip)
+    → build_ml_ready_datasets.ipynb / .py
+    → ml_ready/model_A_trending.csv
+       ml_ready/model_B_audience_posts.csv
+
+    → conjugate-media-model-A-B-training.ipynb
+    → ml_models/*.joblib
+
+    → EngageIQ.ipynb          ← you are here
+    → scores + suggestions for a new post
+```
+
+Related docs:
+
+- [`README.md`](./README.md) — data build + training notebooks  
+- `conjugate-media/server/data/ml_ready/FEATURE_DICTIONARY.md` — column definitions  
+
+---
+
+## 11. Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| `DATA dir not found` | Unzip so `conjugate-media/server/data/` exists, or change the `DATA` path at the top of the build notebook |
-| `model_A_trending.csv` missing when training | Run `build_ml_ready_datasets.ipynb` (or `.py`) first |
-| `No module named sklearn` | `pip install scikit-learn joblib` |
-| Very few rows in Model A | Expected — trending scrapes are smaller; Model B has more rows |
-| `audience_type` almost all “Steady” | Dataset is dominated by one creator’s steady posts; still valid for training the pipeline |
-| Plots don’t show | Ensure you run in Jupyter / VS Code notebook UI (not only a headless script) |
+| `Model folder not found` | Ensure `conjugate-media/server/ml_models/` exists next to how you run the notebook (check working directory) |
+| `FileNotFoundError` on `.joblib` | Run `conjugate-media-model-A-B-training.ipynb` first |
+| `No module named sklearn` / `joblib` | `pip install scikit-learn joblib pandas numpy matplotlib` |
+| Scores look stuck / similar | Provide clearer text; set `content_type`, `duration_sec`, and `audience_type` explicitly |
+| Want different A/B balance | Change `WEIGHT_A` / `WEIGHT_B` in the scorer cell and re-run |
+| Audience types feel off | Re-run clustering in the training notebook on updated post data, then reload models in EngageIQ section 2 |
 
 ---
 
-## Related files
+## Quick start checklist
 
-| File | Role |
-|------|------|
-| `build_ml_ready_datasets.ipynb` | Interactive, explained data pipeline |
-| `build_ml_ready_datasets.py` | Same pipeline as a CLI script |
-| `conjugate-media-model-A-B-training.ipynb` | Train Model A + Model B (incl. audience-aware engagement) |
-| `conjugate-media-data-analysis.ipynb` | Earlier EDA / unified content analysis |
-| `conjugate-media-ml-beginner.ipynb` | Simpler first ML intro on unified CSV |
+1. [ ] `conjugate-media/server/ml_models/` contains the five main `.joblib` files  
+2. [ ] `pip install pandas numpy matplotlib scikit-learn joblib`  
+3. [ ] Open `EngageIQ.ipynb` → **Run All**  
+4. [ ] Edit **section 7** with your caption → run cell  
+5. [ ] Read scorecard + suggestions  
 
 ---
 
 ## License / context
 
-These notebooks are part of the **Conjugate Media** social simulation project (data control plane for multi-platform posts and trending). They operate only on the datasets shipped with the project and do not call external live APIs at train time.
+EngageIQ is part of the **Conjugate Media** stack (social simulation / control plane). It only uses locally saved models and does not call live social APIs at inference time.
