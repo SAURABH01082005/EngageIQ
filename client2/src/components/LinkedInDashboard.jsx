@@ -19,7 +19,7 @@ function LinkedInDashboard() {
   useEffect(() => {
     if (!token) return;
 
-    fetch("http://localhost:5001/auth/linkedin/profile", {
+    fetch("/auth/linkedin/profile", {
       headers: {
         Authorization: token
       }
@@ -29,7 +29,7 @@ function LinkedInDashboard() {
         setProfile(data);
 
         fetch(
-          `http://localhost:5001/auth/linkedin/posts?userId=${data.id}`,
+          `/auth/linkedin/posts?userId=${data.id}`,
           {
             headers: {
               Authorization: token

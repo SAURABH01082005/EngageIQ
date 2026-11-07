@@ -100,13 +100,34 @@ router.post('/ml/two-stage/train', (req, res) => {
 
 /**
  * Two-Stage Candidate Post Predictor
+ * Uses Model A (trending content prior) + Model B (audience personal lift)
+ * and the notebook composite engagement score formula.
  */
 router.post('/ml/two-stage/predict', (req, res) => {
   try {
-    const postData = req.body || {};
-    if (!postData.userEmail) {
-      postData.userEmail = getUserEmailFromReq(req);
-    }
+    const body = req.body || {};
+    const text = body.postText || body.caption || body.content || body.title || body.text || '';
+    const postType = (body.postType || body.post_type || 'text').toLowerCase();
+    const isVideo = postType.includes('video') || postType.includes('reel') || postType.includes('short');
+
+    const postData = {
+      title: body.title || text.split('\n')[0].slice(0, 80),
+      caption: text,
+      text,
+      platform: (body.platform || 'instagram').toLowerCase().replace('x', 'twitter'),
+      postType,
+      followers: Number(body.followers || body.subscribers) || 10000,
+      subscribers: Number(body.subscribers || body.followers) || 10000,
+      durationSec: Number(body.durationSec || body.duration_sec || (isVideo ? 28 : 0)),
+      aspectRatio: body.aspectRatio || body.aspect_ratio || (isVideo ? '9:16' : '1:1'),
+      hasSubtitles: body.hasSubtitles !== undefined ? Boolean(body.hasSubtitles) : isVideo,
+      hookRating: Number(body.hookRating || body.hook_rating || 8),
+      hour_of_day: body.hour_of_day !== undefined ? Number(body.hour_of_day) : new Date().getHours(),
+      day_of_week: body.day_of_week || ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()],
+      userEmail: body.userEmail || getUserEmailFromReq(req),
+      imageType: body.imageType || body.image_type
+    };
+
     const prediction = predictCandidatePost(postData);
     res.json(prediction);
   } catch (error) {

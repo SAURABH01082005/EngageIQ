@@ -200,10 +200,18 @@ INSTRUCTIONS:
 5. Be concise, authoritative, inspiring, and direct.`;
       }
 
-      // Candidate models for maximum compatibility across Google API versions
-      const candidateModels = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+      // Candidate models for Google Generative AI
+      const candidateModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
       let result = null;
-      let usedModelName = 'gemini-flash-latest';
+      let usedModelName = 'gemini-1.5-flash';
+
+      // Helper with strict 3.5s timeout so we never hang server operations
+      const generateWithTimeout = (m, p, ms = 3500) => {
+        return Promise.race([
+          m.generateContent(p),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini API call timed out')), ms))
+        ]);
+      };
 
       for (const mName of candidateModels) {
         try {
@@ -216,13 +224,14 @@ INSTRUCTIONS:
           } catch {
             model = genAI.getGenerativeModel({ model: mName });
           }
-          result = await model.generateContent(prompt);
+          result = await generateWithTimeout(model, prompt, 3500);
           if (result && result.response) {
             usedModelName = mName;
             break;
           }
         } catch (mErr) {
-          // Continue to next model if 404 or unsupported
+          // If timeout, invalid key, or network issue, do not block; break immediately to fallback
+          break;
         }
       }
 
@@ -360,7 +369,7 @@ Our **Two-Stage Machine Learning Pipeline** evaluated multi-format simulations a
 - **Best Window:** **${mlData.meta?.bestTime || '6:00 PM – 8:30 PM Weekdays'}** (Peak audience concurrency).`;
   }
   // 3. Best Time to Post / Scheduling
-  else if (intent === 'best_time' || lower.includes('time') || lower.includes('when to post') || lower.includes('schedule')) {
+  else if (intent === 'best_time' || /\b(when to post|best time|posting time|schedule|peak time)\b/i.test(lower)) {
     title = 'Gemini 1.5 Flash: Optimal Posting Windows & Velocity Playbook';
     responseBody = `### ⏰ Gemini 1.5 Flash Scheduling & Algorithmic Velocity Strategy
 

@@ -54,14 +54,26 @@ const { predictCandidatePost } = require("../ml/twoStageEngine");
 app.post("/api/predict-engagement", (req, res) => {
   try {
     const postData = req.body || {};
-    const text = postData.postText || postData.caption || postData.content || "";
+    const text = postData.postText || postData.caption || postData.content || postData.title || "";
+    const postType = (postData.postType || postData.post_type || "text").toLowerCase();
+    const isVideo = postType.includes("video") || postType.includes("reel") || postType.includes("short");
+
     const twoStage = predictCandidatePost({
-      title: text.split('\n')[0].slice(0, 80),
+      title: postData.title || text.split("\n")[0].slice(0, 80),
       caption: text,
-      platform: postData.platform || "instagram",
-      postType: postData.postType || "text",
-      followers: Number(postData.followers) || 10000,
-      userEmail: req.headers["x-user-email"] || req.query.userEmail || postData.userEmail || "default_user"
+      text: text,
+      platform: (postData.platform || "instagram").toLowerCase().replace("x", "twitter"),
+      postType,
+      followers: Number(postData.followers || postData.subscribers) || 10000,
+      subscribers: Number(postData.subscribers || postData.followers) || 10000,
+      durationSec: Number(postData.durationSec || postData.duration_sec || (isVideo ? 28 : 0)),
+      aspectRatio: postData.aspectRatio || postData.aspect_ratio || (isVideo ? "9:16" : "1:1"),
+      hasSubtitles: postData.hasSubtitles !== undefined ? Boolean(postData.hasSubtitles) : isVideo,
+      hookRating: Number(postData.hookRating || postData.hook_rating || 8),
+      hour_of_day: postData.hour_of_day !== undefined ? Number(postData.hour_of_day) : new Date().getHours(),
+      day_of_week: postData.day_of_week || ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()],
+      userEmail: req.headers["x-user-email"] || req.query.userEmail || postData.userEmail || "default_user",
+      imageType: postData.imageType || postData.image_type
     });
 
     const reasons = (twoStage.suggestions || []).map(s => `${s.title}: ${s.description}`);

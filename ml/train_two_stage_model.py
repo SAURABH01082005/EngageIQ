@@ -431,7 +431,8 @@ def train_two_stage_framework(user_email='default_user'):
             "mean_lifts": {
                 "mean_breakout_lift": round(float(np.mean(lift_breakout)), 4),
                 "mean_quality_lift": round(float(np.mean(lift_quality)), 4),
-                "mean_virality_lift": round(float(np.mean(lift_virality)), 4)
+                "mean_virality_lift": round(float(np.mean(lift_virality)), 4),
+                "mean_engagement_lift": round(float(np.mean(lift_breakout) * 0.45 + np.mean(lift_quality) * 12.0), 4)
             },
             "coefficients": {
                 "breakout_lift_coef": [round(float(c), 4) for c in model_B_breakout.coef_],

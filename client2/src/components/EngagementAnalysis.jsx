@@ -28,7 +28,7 @@ function EngagementAnalysis({ onNavigate, onBack, selectedCompany }) {
 
     setLoading(true);
     axios
-      .get("http://localhost:5001/api/companies/getCompanyPosts", {
+      .get("/api/companies/getCompanyPosts", {
         params: { companyName: currentCompany.name },
       })
       .then((res) => {

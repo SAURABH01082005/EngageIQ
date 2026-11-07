@@ -169,11 +169,13 @@ def predict_two_stage(post_data):
     if x[17] > 0.5: feature_bonus += 0.10
     if x[18] > 0.5: feature_bonus += 0.08
 
+    # Model A — Universal Content Prior (trending videos)
     model_A_breakout_pred = mean_breakout + feature_bonus * 0.45
     model_A_quality_pred = mean_quality * (1.0 + feature_bonus * 0.35)
     model_A_virality_pred = math.expm1(mean_virality_log) * (1.0 + feature_bonus * 0.25)
+    model_A_er_pred = min(18.0, max(0.8, (model_A_quality_pred * 100) * (1.0 + feature_bonus * 0.4)))
 
-    # Model B: Personal Lift
+    # Model B — Audience Taste + Personal Lift
     b_mean_breakout_lift = model['model_B']['mean_lifts']['mean_breakout_lift'] if model else 0.15
     b_mean_quality_lift = model['model_B']['mean_lifts']['mean_quality_lift'] if model else 0.005
 
@@ -183,21 +185,41 @@ def predict_two_stage(post_data):
     model_B_breakout_lift_pred = (b_mean_breakout_lift * 0.5 + feature_bonus * 0.15) * affinity_multiplier
     model_B_quality_lift_pred = (b_mean_quality_lift + feature_bonus * 0.002) * affinity_multiplier
 
-    # Combined Final Prediction (Theory 1: final = baseline + ModelA_pred + ModelB_pred)
+    # Combined Final Prediction (Theory 1: hierarchical A + B)
     final_breakout = model_A_breakout_pred + model_B_breakout_lift_pred
     final_quality = model_A_quality_pred + model_B_quality_lift_pred
 
-    # Theory 2: Multi-Action Virality Formula: views + 15*likes + 50*comments + 100*shares
+    # Theory 2: Multi-Action Virality Index = views + 15×likes + 50×comments + 100×shares
     final_virality_index = int(model_A_virality_pred * (1.0 + max(-0.5, model_B_breakout_lift_pred * 0.25)))
 
-    # Engagement Score Calculation (0 - 100)
-    score_base = 65
-    breakout_contribution = (final_breakout - mean_breakout) * 16.0
-    quality_contribution = ((final_quality - mean_quality) / mean_quality) * 12.0
-    feature_score = feature_bonus * 15.0
+    # Predicted engagement rate after Model B audience affinity
+    final_er = min(22.0, model_A_er_pred * (0.85 + affinity_multiplier * 0.25) * (1.0 + feature_bonus * 0.15))
 
-    engagement_score = int(round(score_base + breakout_contribution + quality_contribution + feature_score))
-    engagement_score = max(30, min(98, engagement_score))
+    # Composite Engagement Score (0–100) — exact notebook soft-normalization
+    # er_s  = min(ER / 15, 1)
+    # qrr_s = min(QRR / 0.20, 1)
+    # vir_s = min(log1p(virality) / 20, 1)
+    # brk_s = min(max((breakout + 2) / 8, 0), 1)
+    # score = 100 * (0.35*er_s + 0.25*qrr_s + 0.25*vir_s + 0.15*brk_s)
+    er_s  = min(final_er / 15.0, 1.0)
+    qrr_s = min(final_quality / 0.20, 1.0)
+    vir_s = min(math.log1p(max(0, final_virality_index)) / 20.0, 1.0)
+    brk_s = min(max((final_breakout + 2) / 8.0, 0), 1.0)
+
+    raw_composite = 100.0 * (0.35 * er_s + 0.25 * qrr_s + 0.25 * vir_s + 0.15 * brk_s)
+    residual = feature_bonus * 6.0
+    engagement_score = max(28, min(97, int(round(raw_composite + residual))))
+
+    # Explicit Model A / Model B sub-scores
+    model_A_score = max(25, min(95, int(round(
+        100.0 * (0.35 * min(model_A_er_pred / 15.0, 1.0) +
+                 0.25 * min(model_A_quality_pred / 0.20, 1.0) +
+                 0.25 * min(math.log1p(model_A_virality_pred) / 20.0, 1.0) +
+                 0.15 * min(max((model_A_breakout_pred + 2) / 8.0, 0), 1.0))
+    ))))
+    model_B_score = max(25, min(95, int(round(
+        engagement_score * (0.55 + 0.25 * (affinity_multiplier - 1.0)) + model_B_breakout_lift_pred * 8
+    ))))
 
     # Breakout Rating letter grade
     if engagement_score >= 90:
@@ -290,12 +312,16 @@ def predict_two_stage(post_data):
     return {
         "success": True,
         "engagementScore": engagement_score,
+        "modelAScore": model_A_score,
+        "modelBScore": model_B_score,
         "growth": growth_likelihood,
         "confidence": min(95, max(60, int(70 + feature_bonus * 20))),
         "breakoutRating": breakout_grade,
         "breakoutScore": round(float(final_breakout), 4),
         "qualityScore": round(float(final_quality), 4),
+        "predictedER": round(float(final_er), 3),
         "viralityIndex": final_virality_index,
+        "expectedReactions": expected_likes + expected_comments + expected_shares,
         "expectedMetrics": {
             "reach": expected_reach,
             "likes": expected_likes,
@@ -303,14 +329,48 @@ def predict_two_stage(post_data):
             "shares": expected_shares,
             "totalReactions": expected_likes + expected_comments + expected_shares
         },
+        "predictedMetrics": {
+            "views": int(round(expected_reach * 2.2)),
+            "reach": expected_reach,
+            "likes": expected_likes,
+            "comments": expected_comments,
+            "shares": expected_shares,
+            "totalReactions": expected_likes + expected_comments + expected_shares,
+            "retentionRate": f"{min(94, int(round(45 + (engagement_score * 0.45))))}%",
+            "watchTimeAvgSec": int(round(float(post_data.get('durationSec') or 28) * 0.65)),
+            "engagementRate": f"{final_er}%"
+        },
+        "videoSpecs": {
+            "durationSec": float(post_data.get('durationSec') or (28.0 if is_video else 0.0)),
+            "aspectRatio": post_data.get('aspectRatio') or ('9:16' if is_video else '1:1'),
+            "hasSubtitles": bool(x[11] > 0.5),
+            "hookRating": float(post_data.get('hookRating') or 8.0)
+        },
+        "improvements": suggestions,
+        "reasons": [f"{s['title']}: {s['description']}" for s in suggestions],
+        "scoringAlgorithm": {
+            "name": "Notebook Composite Engagement Score (Model A + Model B)",
+            "formula": "100 × (0.35·er_s + 0.25·qrr_s + 0.25·vir_s + 0.15·brk_s) + residual",
+            "components": {
+                "er_s": round(er_s, 3),
+                "qrr_s": round(qrr_s, 3),
+                "vir_s": round(vir_s, 3),
+                "brk_s": round(brk_s, 3),
+                "residual": round(residual, 2)
+            },
+            "weights": {"engagement_rate": 0.35, "quality_reaction": 0.25, "virality": 0.25, "breakout": 0.15}
+        },
         "twoStageBreakdown": {
             "model_A_content_prior": {
+                "score": model_A_score,
                 "breakout": round(float(model_A_breakout_pred), 4),
                 "quality": round(float(model_A_quality_pred), 4),
+                "predicted_er": round(float(model_A_er_pred), 3),
                 "virality": int(model_A_virality_pred),
                 "basis": "330 Verified Trending Videos (Conjugate Media)"
             },
             "model_B_personal_lift": {
+                "score": model_B_score,
                 "breakout_lift": round(float(model_B_breakout_lift_pred), 4),
                 "quality_lift": round(float(model_B_quality_lift_pred), 4),
                 "platform_taste_affinity": f"{affinity_multiplier}x ({platform.capitalize()})",

@@ -170,14 +170,105 @@ router.post('/predict-draft', async (req, res) => {
 /**
  * Dedicated Video Predictor
  */
-router.post('/predict-video', (req, res) => {
+/**
+ * Dedicated Video Predictor
+ * Combines Two-Stage ML Model predictions with multimodal video retention analysis
+ */
+router.post('/predict-video', async (req, res) => {
   try {
-    const postData = req.body || {};
-    const prediction = predictCandidatePost({
-      ...postData,
-      postType: 'video'
+    const {
+      platform = 'instagram',
+      durationSec = 28,
+      aspectRatio = '9:16',
+      hasSubtitles = true,
+      hookRating = 8,
+      audioType = 'trending',
+      caption = '',
+      followers = 12500,
+      userEmail
+    } = req.body || {};
+
+    const cleanUserEmail = userEmail || req.headers['x-user-email'] || 'default_user';
+    const numFollowers = Number(followers) || 12500;
+    const numDuration = Number(durationSec) || 28;
+
+    // 1. Run dynamic ML prediction via ML Predictor Service Bridge (FastAPI / Two-Stage Engine)
+    const mlResult = await predictWithMLService({
+      title: caption.split('\n')[0].slice(0, 80),
+      caption,
+      text: caption,
+      platform,
+      postType: 'video',
+      followers: numFollowers,
+      durationSec: numDuration,
+      aspectRatio,
+      hasSubtitles: Boolean(hasSubtitles),
+      hookRating: Number(hookRating) || 8,
+      userEmail: cleanUserEmail
     });
-    res.json(prediction);
+
+    // 2. Multimodal feature extraction for video retention, completion rate & watch time
+    const baseMultimodal = predictVideoPost({
+      platform,
+      followers: numFollowers,
+      durationSec: numDuration,
+      aspectRatio,
+      hasSubtitles: Boolean(hasSubtitles),
+      hookRating: Number(hookRating) || 8,
+      audioType,
+      caption
+    });
+
+    // 3. Best Time to Post
+    const normPlatform = (platform || 'instagram').toLowerCase().replace('x', 'twitter');
+    const platformTiming = {
+      instagram: { timeSlot: '6:30 PM – 8:30 PM', days: 'Tuesday, Thursday, Friday' },
+      twitter: { timeSlot: '8:30 AM – 10:30 AM & 6:00 PM – 7:30 PM', days: 'Tuesday – Thursday' },
+      linkedin: { timeSlot: '7:45 AM – 9:30 AM & 5:00 PM – 6:30 PM', days: 'Tuesday, Wednesday, Thursday' },
+      facebook: { timeSlot: '6:30 PM – 9:00 PM', days: 'Thursday – Saturday' },
+      youtube: { timeSlot: '5:00 PM – 8:00 PM', days: 'Wednesday – Sunday' }
+    };
+    const bestTime = platformTiming[normPlatform] || platformTiming.instagram;
+
+    const response = {
+      ...baseMultimodal,
+      engagementScore: mlResult.engagementScore,
+      tier: mlResult.tier,
+      growth: mlResult.growth,
+      confidence: mlResult.confidence,
+      breakoutRating: mlResult.breakoutRating,
+      breakoutScore: mlResult.breakoutScore,
+      qualityScore: mlResult.qualityScore,
+      viralityIndex: mlResult.viralityIndex,
+      expectedMetrics: mlResult.expectedMetrics,
+      predictedMetrics: {
+        ...baseMultimodal.predictedMetrics,
+        shares: mlResult.expectedMetrics?.shares || baseMultimodal.predictedMetrics?.shares,
+        views: baseMultimodal.predictedMetrics?.views || Math.round(mlResult.expectedMetrics?.reach * 2.2)
+      },
+      twoStageBreakdown: mlResult.twoStageBreakdown,
+      mlMeta: {
+        ...(baseMultimodal.mlMeta || {}),
+        ...(mlResult.mlMeta || {}),
+        engineUsed: mlResult.engineUsed,
+        engineLabel: mlResult.engineLabel
+      },
+      suggestions: mlResult.suggestions || [],
+      improvements: [
+        ...(mlResult.suggestions || []),
+        ...(baseMultimodal.improvements || [])
+      ],
+      bestTimeToPost: bestTime,
+      videoSpecs: {
+        durationSec: numDuration,
+        aspectRatio,
+        hasSubtitles: Boolean(hasSubtitles),
+        hookRating: Number(hookRating) || 8,
+        audioType
+      }
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Predict Video Error:', error);
     res.status(500).json({ error: 'Failed to analyze video engagement.' });

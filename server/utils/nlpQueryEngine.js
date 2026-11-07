@@ -299,7 +299,7 @@ ${(mlPred.suggestions || []).slice(0, 3).map(s => `- **${s.title}** (${s.impact}
   }
 
   // ── INTENT 3: BEST TIME TO POST / SCHEDULE ──
-  if (q.includes('time') || q.includes('when to post') || q.includes('schedule') || q.includes('day') || q.includes('hour')) {
+  if (/\b(when to post|best time|posting time|schedule|peak hour|peak time|post time|what time)\b/i.test(q)) {
     const targetPlatform = platformsFilter.find((p) => q.includes(p)) || topPlatform;
 
     return {
@@ -369,8 +369,8 @@ ${(mlPred.suggestions || []).slice(0, 3).map(s => `- **${s.title}** (${s.impact}
 
   // ── INTENT 9: GREETINGS & CASUAL HELLO ("HOW ARE YOU", "HELLO", "WHAT'S UP") ──
   const isGreeting =
-    /^(hi|hello|hey|howdy|greetings|good\s+(morning|afternoon|evening|day)|how\s+are\s+(you|u)|how\s+are\s+you\s+doing|how\s+is\s+it\s+going|how\'?s\s+it\s+going|what\'?s\s+up|whats\s+up|sup)[\s\?!.]*$/i.test(q) ||
-    /^(how\s+are\s+you|how\s+r\s+u|how\s+are\s+u)[\s\?!.]*/i.test(q);
+    /^(hi|hello|hey|howdy|greetings|good\s+(morning|afternoon|evening|day)|how\s+are\s+(you|u)|how\s+are\s+you\s+doing|how\s+is\s+it\s+going|how\'?s\s+it\s+going|what\'?s\s+up|whats\s+up|sup)\b/i.test(q) ||
+    /\b(how\s+are\s+you|how\s+r\s+u|how\s+are\s+u|hello|hey\s+there)\b/i.test(q);
 
   if (isGreeting) {
     return {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import apiService from "../services/apiService";
 import "./EngagementPrediction.css";
 
 function EngagementPrediction({ selectedPost, isOpen, onClose }) {
@@ -20,6 +20,10 @@ function EngagementPrediction({ selectedPost, isOpen, onClose }) {
     setError(null);
     try {
       let followers, postText, postType, reactions, comments, daysSincePosted, platform;
+      let durationSec = 0;
+      let aspectRatio = "1:1";
+      let hasSubtitles = false;
+      let hookRating = 7;
 
       if (selectedPost.specificContent) {
         postText =
@@ -35,32 +39,42 @@ function EngagementPrediction({ selectedPost, isOpen, onClose }) {
         platform = "linkedin";
       } else {
         followers = parseInt(selectedPost.followers || selectedPost.subscribers) || 10000;
-        postText = selectedPost.content || selectedPost.caption || selectedPost.text || "";
-        postType = selectedPost.media_type || selectedPost.postType || selectedPost.post_type || "text";
+        postText = selectedPost.content || selectedPost.caption || selectedPost.text || selectedPost.title || "";
+        postType = (selectedPost.media_type || selectedPost.postType || selectedPost.post_type || "text").toLowerCase();
         reactions = parseInt(selectedPost.reactions || selectedPost.likes) || 0;
         comments = parseInt(selectedPost.comments) || 0;
         daysSincePosted =
           parseInt(selectedPost.daysSincePosted) || parseInt(selectedPost.time_spent) || 0;
-        platform = selectedPost.platform || "instagram";
+        platform = (selectedPost.platform || "instagram").toLowerCase().replace("x", "twitter");
+        durationSec = Number(selectedPost.durationSec || selectedPost.duration_sec || (postType.includes("video") || postType.includes("reel") ? 28 : 0));
+        aspectRatio = selectedPost.aspectRatio || selectedPost.aspect_ratio || (durationSec > 0 && durationSec <= 65 ? "9:16" : "1:1");
+        hasSubtitles = selectedPost.hasSubtitles === true || selectedPost.has_subtitles === true || (durationSec > 0);
+        hookRating = Number(selectedPost.hookRating || selectedPost.hook_rating || 8);
       }
 
-      const userEmail = localStorage.getItem('userEmail') || 'default_user';
+      const userEmail = localStorage.getItem("userEmail") || "default_user";
 
-      const response = await axios.post("http://localhost:5001/api/predict-engagement", {
+      const payload = {
         followers,
         postText,
+        caption: postText,
+        title: postText.split("\n")[0].slice(0, 80),
         postType,
         reactions,
         comments,
         daysSincePosted,
         platform,
-        userEmail
-      }, {
-        headers: {
-          'x-user-email': userEmail
-        }
-      });
-      setPrediction(response.data);
+        userEmail,
+        durationSec,
+        aspectRatio,
+        hasSubtitles,
+        hookRating,
+        hour_of_day: new Date().getHours(),
+        day_of_week: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()]
+      };
+
+      const data = await apiService.ai.predictEngagement(payload);
+      setPrediction(data);
     } catch (err) {
       console.error("Error predicting engagement:", err);
       setError("Failed to analyze engagement. Please ensure the EngageIQ server is running.");
@@ -175,7 +189,11 @@ function EngagementPrediction({ selectedPost, isOpen, onClose }) {
                     <div style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700, textTransform: 'uppercase' }}>
                       Model A: Content Prior
                     </div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc', margin: '0.2rem 0' }}>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#38bdf8', margin: '0.15rem 0' }}>
+                      {prediction.modelAScore ?? prediction.twoStageBreakdown.model_A_content_prior?.score ?? '—'}
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>/100</span>
+                    </div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc', margin: '0.15rem 0' }}>
                       {prediction.twoStageBreakdown.model_A_content_prior.breakout >= 0 ? '+' : ''}
                       {prediction.twoStageBreakdown.model_A_content_prior.breakout} Breakout
                     </div>
@@ -193,7 +211,11 @@ function EngagementPrediction({ selectedPost, isOpen, onClose }) {
                     <div style={{ fontSize: '0.7rem', color: '#c084fc', fontWeight: 700, textTransform: 'uppercase' }}>
                       Model B: Personal Lift
                     </div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc', margin: '0.2rem 0' }}>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#c084fc', margin: '0.15rem 0' }}>
+                      {prediction.modelBScore ?? prediction.twoStageBreakdown.model_B_personal_lift?.score ?? '—'}
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>/100</span>
+                    </div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc', margin: '0.15rem 0' }}>
                       {prediction.twoStageBreakdown.model_B_personal_lift.breakout_lift >= 0 ? '+' : ''}
                       {prediction.twoStageBreakdown.model_B_personal_lift.breakout_lift} Lift
                     </div>
@@ -201,6 +223,34 @@ function EngagementPrediction({ selectedPost, isOpen, onClose }) {
                       Taste Affinity: {prediction.twoStageBreakdown.model_B_personal_lift.platform_taste_affinity}
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Scoring Algorithm (Notebook Composite) */}
+              {prediction.scoringAlgorithm && (
+                <div style={{
+                  marginTop: '0.6rem',
+                  padding: '0.7rem 0.85rem',
+                  borderRadius: '8px',
+                  background: 'rgba(34, 197, 94, 0.05)',
+                  border: '1px solid rgba(34, 197, 94, 0.18)',
+                  fontSize: '0.72rem',
+                  color: '#94a3b8'
+                }}>
+                  <div style={{ color: '#4ade80', fontWeight: 700, marginBottom: '0.25rem' }}>
+                    Scoring Algorithm
+                  </div>
+                  <div style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
+                    {prediction.scoringAlgorithm.formula}
+                  </div>
+                  {prediction.scoringAlgorithm.components && (
+                    <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                      <span>er_s={prediction.scoringAlgorithm.components.er_s}</span>
+                      <span>qrr_s={prediction.scoringAlgorithm.components.qrr_s}</span>
+                      <span>vir_s={prediction.scoringAlgorithm.components.vir_s}</span>
+                      <span>brk_s={prediction.scoringAlgorithm.components.brk_s}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

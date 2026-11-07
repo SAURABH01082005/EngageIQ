@@ -10,11 +10,17 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || ''
  */
 const fetchAPI = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  const userEmail =
+    (typeof localStorage !== 'undefined' && localStorage.getItem('userEmail')) ||
+    'default_user';
+
   const defaultOptions = {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      'x-user-email': userEmail,
+      ...(options.headers || {}),
     },
-    ...options,
   };
 
   try {
@@ -93,7 +99,7 @@ export const apiService = {
     queryAI: (query, platform) =>
       fetchAPI('/api/ai-query', {
         method: 'POST',
-        body: JSON.stringify({ query, platform }),
+        body: JSON.stringify({ question: query, query, platform }),
       }),
 
     getRecommendations: (platform) =>

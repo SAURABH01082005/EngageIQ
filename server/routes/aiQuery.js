@@ -9,16 +9,17 @@ const { routeAIQuery, isFixedListedQuery } = require('../utils/aiAssistantRouter
  */
 router.post('/ai-query', async (req, res) => {
   try {
-    const { question, mode = 'auto', apiKey: bodyKey, geminiApiKey } = req.body;
-    const userEmail = req.headers['x-user-email'] || req.body.userEmail || req.query.userEmail || req.headers['x-user-id'] || req.body.userId || 'default_user';
-    const platforms = req.query.platforms ? req.query.platforms.split(',').filter(Boolean) : [];
+    const { question, query, mode = 'auto', apiKey: bodyKey, geminiApiKey } = req.body || {};
+    const rawQuestion = (question || query || req.query?.question || req.query?.query || '').trim();
+    const userEmail = req.headers['x-user-email'] || req.body?.userEmail || req.query?.userEmail || req.headers['x-user-id'] || req.body?.userId || 'default_user';
+    const platforms = req.query?.platforms ? req.query.platforms.split(',').filter(Boolean) : (req.body?.platforms || []);
     const apiKey = req.headers['x-gemini-api-key'] || geminiApiKey || bodyKey || '';
 
-    if (!question || !question.trim()) {
+    if (!rawQuestion) {
       return res.status(400).json({ error: 'Please provide a valid question.' });
     }
 
-    const result = await routeAIQuery(question, platforms, mode, userEmail, apiKey);
+    const result = await routeAIQuery(rawQuestion, platforms, mode, userEmail, apiKey);
     res.json(result);
   } catch (error) {
     console.error('AI Query Error:', error);

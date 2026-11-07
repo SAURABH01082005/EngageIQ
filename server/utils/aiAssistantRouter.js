@@ -68,11 +68,29 @@ const FIXED_QUERY_PATTERNS = [
   }
 ];
 
+// Creative & Generative queries that require Gemini Agent copywriting & strategic framing
+const CREATIVE_GENERATIVE_REGEX = /^(write|give\s+me|generate|create|craft|draft|should\s+i|how\s+should\s+i|brainstorm|plan\s+a)\b/i;
+
+// Conversational chitchat & greetings
+const CONVERSATIONAL_REGEX = /^(hi|hello|hey|howdy|good\s+(morning|afternoon|evening)|how\s+are\s+you|how\s+are\s+u|what\'?s\s+up|whats\s+up|sup|who\s+are\s+you|what\s+can\s+you\s+do|tell\s+me\s+a\s+joke)[\s\?!.]*$/i;
+
 /**
  * Check if a query matches any of the fixed listed queries
  */
 function isFixedListedQuery(question) {
   const q = (question || '').trim();
+  if (!q) return { isFixed: false, patternId: null };
+
+  // Explicit creative prompts (e.g. "Write 3 viral hooks...", "How should I structure a 30-day sprint...")
+  if (CREATIVE_GENERATIVE_REGEX.test(q)) {
+    return { isFixed: false, patternId: 'creative_generative' };
+  }
+
+  // Conversational greetings & capabilities chitchat
+  if (CONVERSATIONAL_REGEX.test(q)) {
+    return { isFixed: false, patternId: 'conversational' };
+  }
+
   for (const item of FIXED_QUERY_PATTERNS) {
     if (item.regex.test(q)) {
       return { isFixed: true, patternId: item.id };
@@ -94,20 +112,22 @@ async function routeAIQuery(question, connectedPlatforms = [], mode = 'auto', us
   const cleanQuery = (question || '').trim();
   const classification = isFixedListedQuery(cleanQuery);
 
-  // Forced ML mode: Returns raw mathematical / analytical ML output without Gemini framing
-  if (mode === 'ml_only') {
+  // 1. Forced ML mode OR Auto Mode with Fixed Query Pattern:
+  // Routes to EngageIQ Two-Stage ML Model & Dynamic Analytics Engine
+  if (mode === 'ml_only' || (mode === 'auto' && classification.isFixed)) {
     const mlResult = await processNaturalLanguageQuery(cleanQuery, connectedPlatforms, userId);
     return {
       ...mlResult,
-      engineUsed: mlResult.engineUsed || 'ml_model',
-      engineLabel: mlResult.engineLabel || 'EngageIQ Dynamic ML Model & Analytics Engine',
-      routingReason: 'User selected ML Model Only mode'
+      engineUsed: 'ml_model',
+      engineLabel: 'EngageIQ Dynamic ML Model & Analytics Engine',
+      routingReason: classification.isFixed
+        ? `Fixed listed query (${classification.patternId}) routed to Two-Stage ML Model & Analytics Engine`
+        : 'User selected ML Model Only mode'
     };
   }
 
-  // Auto Mode & Gemini Mode:
-  // Whatever the query is, compute the ML/analytical data first,
-  // then ask Gemini Flash 1.5 to frame the structured final response.
+  // 2. Open-ended / creative / strategic query (or explicit 'gemini_only' mode):
+  // Route to Gemini Flash AI Agent, grounded in ML data, live trends, and Model B audience taste
   const mlResult = await processNaturalLanguageQuery(cleanQuery, connectedPlatforms, userId);
 
   const framedResult = await frameWithGeminiFlash(cleanQuery, mlResult, {
@@ -118,9 +138,9 @@ async function routeAIQuery(question, connectedPlatforms = [], mode = 'auto', us
 
   return {
     ...framedResult,
-    routingReason: classification.isFixed
-      ? `Two-Stage ML Engine computed ground truth (${classification.patternId}) -> Framed by Gemini 1.5 Flash`
-      : 'Open-ended strategic query analyzed & framed by Gemini 1.5 Flash with live trends & audience taste'
+    engineUsed: 'gemini_agent',
+    engineLabel: framedResult.engineLabel || 'Gemini Flash AI Agent',
+    routingReason: 'Open-ended strategic query routed to Gemini AI Agent with live trends & audience taste'
   };
 }
 
